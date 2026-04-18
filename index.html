@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国网人资舆情标注 · 模型驱动</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eef2f6; margin: 20px; display: flex; justify-content: center; }
+        .container { max-width: 1350px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 16px 40px rgba(0,0,0,0.08); padding: 30px 32px; }
+        h1 { font-size: 1.9rem; margin-top: 0; margin-bottom: 8px; color: #0b2b4a; }
+        .subtitle { color: #2c5f7b; margin-bottom: 22px; border-left: 4px solid #1e7e83; padding-left: 18px; }
+        .card { background: #f9fcff; border-radius: 20px; padding: 18px 22px; margin-bottom: 22px; border: 1px solid #d9e6f2; }
+        .flex-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+        .btn { background: #1e3b5c; color: white; border: none; padding: 12px 26px; border-radius: 60px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 8px rgba(0,20,40,0.1); transition: 0.2s; border: 1px solid #2b5580; }
+        .btn:hover { background: #143048; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; pointer-events: none; background: #7a8f9f; }
+        .btn-outline { background: #eef3fa; color: #1e3b5c; border: 1px solid #b6cbd9; box-shadow: none; }
+        .file-label { background: #eef3fa; padding: 12px 26px; border-radius: 60px; cursor: pointer; font-weight: 500; border: 1px dashed #2c6b9a; }
+        .file-label input { display: none; }
+        .mode-switch { display: flex; gap: 30px; background: #e4ecf3; padding: 6px 20px; border-radius: 48px; }
+        .mode-switch label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .stats { display: flex; gap: 30px; margin: 16px 0 8px; color: #1e405e; }
+        .badge { background: #d4e2ee; padding: 6px 16px; border-radius: 40px; }
+        .log-box { background: #1a2c3b; color: #b3e0d2; padding: 14px 18px; border-radius: 16px; font-family: monospace; font-size: 0.85rem; max-height: 180px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 8px; }
+        th, td { border: 1px solid #bdcfd9; padding: 6px 10px; text-align: left; }
+        th { background: #d9e4ec; }
+        .preview { max-height: 260px; overflow: auto; border: 1px solid #cbdae3; border-radius: 12px; }
+        .api-config input { padding: 8px 14px; border-radius: 30px; border: 1px solid #b0c8da; width: 360px; }
+        .threshold-row { display: flex; align-items: center; gap: 20px; margin-top: 12px; }
+        .threshold-row label { font-weight: 500; color: #173e5a; }
+        .threshold-row input { width: 200px; }
+        .threshold-row span { background: #eaf0f8; padding: 4px 14px; border-radius: 40px; }
+        .note { font-size: 0.8rem; color: #3e6279; margin-top: 14px; }
+        .footer { margin-top: 28px; text-align: right; color: #5f7e96; }
+    </style>
+    <!-- SheetJS -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>🤖 国网人资舆情标注 · 大模型驱动</h1>
+    <div class="subtitle">填写API Key · 调用大模型 · 可选本地规则</div>
+
+    <!-- API Key 配置区 -->
+    <div class="card">
+        <div style="font-weight:700; margin-bottom:14px;">🔑 API Key 配置</div>
+        <div class="flex-row">
+            <input type="password" id="apiKeyInput" placeholder="请输入您的 API Key" style="flex:2; min-width:300px;">
+            <button class="btn-outline btn" id="testKeyBtn">🔌 测试Key有效性</button>
+            <span id="apiKeyStatus" class="badge">未验证</span>
+        </div>
+        <div style="margin-top:12px; font-size:0.9rem; color:#2e5779;">
+            💡 密钥只保存在浏览器本地，调用失败时自动切换本地规则。
+        </div>
+    </div>
+
+    <!-- 模式选择 + 文件 + 阈值调节 -->
+    <div class="flex-row">
+        <div class="mode-switch">
+            <label><input type="radio" name="analysisMode" value="deepseek" checked> ☁️ AI (在线)</label>
+            <label><input type="radio" name="analysisMode" value="local"> 📦 仅本地规则 (离线)</label>
+        </div>
+        <label class="file-label">
+            📁 选择 Excel 文件
+            <input type="file" id="fileInput" accept=".xlsx, .xls">
+        </label>
+        <button class="btn" id="analyzeBtn" disabled>⚡ 开始分析 & 标注</button>
+        <button class="btn btn-outline" id="exportBtn" disabled>⬇ 导出标记后的 XLSX</button>
+        <span id="statusBadge" class="badge">等待上传</span>
+    </div>
+
+    <!-- 阈值调节 -->
+    <div class="threshold-row">
+        <label>📉 本地规则情感判定阈值：</label>
+        <input type="range" id="thresholdSlider" min="0.00" max="0.4" step="0.01" value="0.01">
+        <span id="thresholdValue">0.01</span>
+        <span style="margin-left:10px; font-size:0.85rem; color:#3e6279;">(分数≥阈值则标记)</span>
+    </div>
+
+    <div class="stats">
+        <div>📊 筛选后总行: <span id="totalRows">0</span></div>
+        <div>🏷️ 本次标记行: <span id="markedRows">0</span></div>
+        <div>⏱️ 耗时: <span id="timeCost">-</span></div>
+    </div>
+
+    <div class="log-box" id="logPanel">[系统] 就绪。本地规则词库已填充，支持阈值调节。</div>
+
+    <div style="margin-top: 18px;">
+        <div><strong>📄 标记结果预览 (前10条)</strong> <span>B='是' </span></div>
+        <div class="preview" id="previewTable"></div>
+    </div>
+    <div class="note">
+        ※ AI模式：自动筛选「舆情标记=是」的行；本地规则：实体词+领域词+负面情感加权，阈值可调。
+    </div>
+    <div class="footer">⚡ API Key仅本地使用 · 数据安全</div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // DOM 元素
+        const fileInput = document.getElementById('fileInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const testKeyBtn = document.getElementById('testKeyBtn');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const apiKeyStatus = document.getElementById('apiKeyStatus');
+        const totalRowsSpan = document.getElementById('totalRows');
+        const markedRowsSpan = document.getElementById('markedRows');
+        const timeCostSpan = document.getElementById('timeCost');
+        const logPanel = document.getElementById('logPanel');
+        const previewDiv = document.getElementById('previewTable');
+        const statusBadge = document.getElementById('statusBadge');
+        const modeRadios = document.getElementsByName('analysisMode');
+        const thresholdSlider = document.getElementById('thresholdSlider');
+        const thresholdValue = document.getElementById('thresholdValue');
+
+        let originalWorkbook = null;
+        let processedWorkbook = null;
+        let sheetName = '';
+        let totalFiltered = 0, markedCount = 0;
+
+        const COL_YQ = '舆情标记';
+        const COL_TITLE = '标题/微博内容';
+        const COL_ABS = '摘要';
+
+        // 显示阈值数值
+        thresholdValue.textContent = thresholdSlider.value;
+        thresholdSlider.addEventListener('input', () => {
+            thresholdValue.textContent = parseFloat(thresholdSlider.value).toFixed(2);
+        });
+
+        function log(msg, isErr=false) {
+            const time = new Date().toLocaleTimeString();
+            logPanel.innerHTML += `\n[${time}] ${msg}`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+            if(isErr) console.error(msg);
+        }
+
+        function escapeHtml(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+        function updateButtons() {
+            analyzeBtn.disabled = !originalWorkbook;
+            exportBtn.disabled = !processedWorkbook;
+        }
+
+        fileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if(!file) return;
+            log(`📂 读取: ${file.name}`);
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+                    originalWorkbook = wb;
+                    sheetName = wb.SheetNames[0];
+                    log(`✅ 工作表: ${sheetName}`);
+                    processedWorkbook = null;
+                    totalFiltered = markedCount = 0;
+                    totalRowsSpan.textContent = '0'; markedRowsSpan.textContent = '0';
+                    previewDiv.innerHTML = '';
+                    updateButtons();
+                    statusBadge.textContent = '文件已加载';
+                } catch(err) { log(`❌ 解析失败: ${err.message}`, true); }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // ---------- 实体词 (国网及附属) ----------
+        const SGCC_ENTITIES = [
+            '国家电网', '国网', '供电公司', '省电力', '市电力', '县电力', 
+            '供电局', '电业局', '电力公司', '电网公司', '国电', '南瑞', 
+            '许继', '平高', '山东电工', '新源', '英大', '中电装备', 
+            '供电所', '农电', '电科院', '经研院', '送变电', '检修公司',
+            '电力', '电网', '电工',
+            // 补充实体词
+            '国网人资部', '国网组织部', '国网工会', '国网监察局', '国网审计部', '国网法律部',
+            '国网党校', '国网技术学院', '国网大数据中心', '国网互联网部', '国网物资公司',
+            '国网客服中心', '国网电动汽车', '国网电商', '国网综合能源', '国网信通',
+            '国网英大', '国网财务公司', '国网租赁', '国网保险', '国网产业单位',
+            '省公司', '市公司', '县公司', '供电服务中心', '客户服务中心',
+            '变电运维', '输电运检', '配电运检', '营销部', '调度中心', '信通公司',
+            '建设部', '发展部', '财务部', '安监部', '党建部', '宣传部', '离退部',
+            '集体企业', '三产公司', '农电公司', '农服公司', '阳光公司', '供服公司',
+            '直签工', '集体工', '劳务工', '外包人员', '借调人员', '挂职人员', '国网总部'
+        ];
+
+        // ---------- 领域词 (招聘/薪酬，已扩充且去重) ----------
+        const DOMAIN_WORDS = new Set([
+            '工资', '发钱', '年终奖', '奖金', '薪酬', '薪资', '年薪', '公积金', '福利', '待遇',
+            '绩效', '高薪', '收入', '降薪', '农电工', '疗养', '负责人', '董事长', '书记', '高管',
+            '高层', '医保', '招聘', '校招', '录用', '录取', '笔试', '面试', '考试', '简历',
+            '毕业生', '大学生', '公示', '批次', '关系户', '子弟', '内定', '萝卜', '作弊', '公平',
+            '公告', '公正', '宣讲', '网申', '过了', '没过', '萝卜岗', '走后门', '同工不同酬',
+            '劳务派遣', '外包', '临时工', '合同工', '编制', '转正', '升职', '五险一金', '六险二金', '社保',
+            // 第一轮补充领域词
+            '加班费', '夜班补贴', '高温补贴', '取暖费', '餐补', '交通补贴', '通讯补贴', '住房补贴',
+            '企业年金', '补充医疗保险', '季度奖', '年终兑现', '目标奖', '专项奖', '安全奖', '全勤奖',
+            '提成', '计件工资', '基本工资', '岗位工资', '工龄工资', '职称津贴', '值班费',
+            '过节费', '防暑降温费', '洗理费', '劳保费', '辞退补偿', '经济补偿金', '网申截止', '资格审查',
+            '资格初审', '资格复审', '体测', '体检', '政审', '背调', '公示期', '拟录用', '递补', '调剂', '签约',
+            '三方协议', '劳动合同', '试用期', '见习期', '轮岗', '定向招聘', '社会招聘', '内部招聘', '竞聘',
+            '调剂志愿', '服从调剂', '笔试成绩', '面试成绩', '综合成绩', '排名', '入围', '上岸', '国网一批',
+            '国网二批', '提前批', '统考', '调剂公告',
+            '人资部', 'HR', '招聘专员', '面试官', '考务人员', '纪检组', '工会', '申诉渠道',
+            '劳务公司', '派遣公司', '外包公司', '省公司', '市局', '县局', '基层单位', '离职', '辞职', '劝退',
+            '裁员', '优化', '末位淘汰', '待岗', '调岗', '降职', '免职', '处分',
+            // 第二轮补充领域词
+            '宣讲会', '双选会', '笔试大纲', '面试公告', '体检标准', '政审表', '背景调查',
+            '入职手续', '报到证', '派遣证', '违约', '解约', '离职率', '流失率',
+            '定岗定编', '岗位竞聘', '职级晋升', '职称评审', '技能鉴定', '培训', '轮训',
+            '挂职', '借调', '跟班学习', '师徒制', '年薪制', '协议工资', '项目工资',
+            '包干', '系数', '档位', '薪级', '薪档', '调资', '套改',
+            '劳动争议', '仲裁', '诉讼', '劳动监察', '投诉举报', '信访', '申诉', '复议'
+        ]);
+
+        // ---------- 负面情感词 (已全面扩充、去重) ----------
+        const NEG_WORDS = new Set([
+            '差','烂','坑','垃圾','黑','暗箱','不公','歧视','压榨','克扣','拖欠',
+            '霸王','腐败','受贿','贪污','造假','作弊','违规','潜规则','血汗',
+            '寒心','愤怒','维权','投诉','曝光','陷阱','骗','忽悠','套路',
+            '欺负','侮辱','冷漠','推诿','刁难','不作为','低','少','缩水','减少','降低','下调',
+            '内定','萝卜','关系户','走后门','同工不同酬','截留','侵吞',
+            '克扣','拖欠','降薪','缩水','倒挂','不公','偏低','压榨','剥削','扣发','拖延',
+            '不透明','差距','绩效不公','福利取消','不涨薪','虚假承诺','萝卜坑','黑幕',
+            '走后门','歧视','不公平','虚假','毁约','压价','强制','隐瞒','暗箱','过场',
+            '无效','尊重',
+            '极其','严重','十分','非常','特别','简直','太','超','巨','爆','炸裂','崩溃','无语',
+            '离谱','荒唐','可笑','恶心','反胃','窒息','绝望','崩溃','无语','委屈','憋屈','心酸','心累','失望','绝望',
+            '寒心','凉心','伤心','难过','气愤','恼火','暴怒','崩溃','抑郁','焦虑','烦躁','不爽','不服','不甘','不平衡','意难平',
+            '耍赖','抵赖','赖账','扯皮','踢皮球','打太极','装死','失联','消失','拖延症',
+            '磨洋工','敷衍了事','应付差事','走过场','做样子','表面功夫','形式主义',
+            '一刀切','层层加码','朝令夕改','因人而异','看人下菜','双重标准','暗箱操作','黑箱操作',
+            '幕后操作','私下操作','打招呼','递条子','托关系','找门路',
+            '落选','淘汰','出局','刷掉','不要','拒绝','退回','驳回','不予通过','不予录用',
+            '暂缓','搁置','石沉大海','杳无音信','没有下文','不了了之',
+            // 第三轮补充负面词
+            '背锅','甩锅','内卷','躺平','PUA','画饼','大饼','毒打','劝退',
+            '恶心人','不地道','不厚道','玩人','折腾','反复横跳','摆烂',
+            '穿小鞋','打击报复','边缘化','架空','冷暴力','软裁员','变相裁员',
+            '地域黑','学校歧视','性别歧视','已婚歧视','未婚歧视','生育歧视','第一学历歧视',
+            '关系网','裙带','派系','圈子','裙带关系','官僚','衙门作风','门难进','脸难看',
+            '形式化','做表面','搞形式','口头支票','待遇滑坡','奖金归零','承诺不兑现',
+            '空头支票','白嫖','套路深','水深','雷区','踩坑','避雷','拉胯','要命',
+            '想骂人','心寒到底','凉透','无语至极','巨坑','天坑','劝退警告'
+        ]);
+
+        function containsSgcc(text) {
+            if(!text) return false;
+            const t = text.toLowerCase();
+            return SGCC_ENTITIES.some(e => t.includes(e.toLowerCase()));
+        }
+
+        function containsDomain(text) {
+            if(!text) return false;
+            const t = text.toLowerCase();
+            for(let w of DOMAIN_WORDS) {
+                if(t.includes(w.toLowerCase())) return true;
+            }
+            return false;
+        }
+
+        function localSentiment(text) {
+            if(!text || !containsSgcc(text)) return 0;
+            if(!containsDomain(text)) return 0;
+            
+            const lower = text.toLowerCase();
+            const words = lower.split(/[\s,，。、；;！!？?<>《》()\[\]【】"“”'‘’\n\r\t]+/).filter(w=>w.length>0);
+            
+            let negScore = 0;
+            
+            // 1. 词级别加权
+            for(let i=0; i<words.length; i++) {
+                const w = words[i];
+                if(NEG_WORDS.has(w)) {
+                    let weight = 1.0;
+                    if(i>0 && words[i-1] === w) weight = 1.8;
+                    if(i<words.length-1 && words[i+1] === w) weight = 1.8;
+                    negScore += weight;
+                }
+            }
+            
+            // 2. 子串兜底匹配
+            for(let nw of NEG_WORDS) {
+                if(lower.includes(nw.toLowerCase())) {
+                    negScore += 0.5;
+                }
+            }
+            
+            return Math.min(1.0, negScore / 2.0);
+        }
+
+        // ---------- DeepSeek API ----------
+        async function callDeepSeekSentiment(text) {
+            const apiKey = apiKeyInput.value.trim();
+            if(!apiKey) throw new Error('未填写API Key');
+            const prompt = `请判断以下文本对“国家电网招聘或薪酬”的情感倾向。只回答一个词：“正面”或“负面”。\n文本：${text}`;
+            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: prompt }], max_tokens: 10, temperature: 0.1 })
+            });
+            if(!response.ok) throw new Error(`API错误 ${response.status}`);
+            const data = await response.json();
+            const reply = data.choices[0].message.content.trim();
+            return reply.includes('负面') ? 0.95 : (reply.includes('正面') ? 0.05 : 0.5);
+        }
+
+        testKeyBtn.addEventListener('click', async () => {
+            const key = apiKeyInput.value.trim();
+            if(!key) { log('请填写API Key', true); return; }
+            apiKeyStatus.textContent = '测试中...';
+            log('🔑 测试大模型 API Key...');
+            try {
+                const score = await callDeepSeekSentiment('国家电网工资太低，招聘不公。');
+                apiKeyStatus.textContent = `✅ 有效 (倾向: ${score>0.5?'负面':'正面'})`;
+                log(`✅ Key有效`);
+            } catch(e) {
+                apiKeyStatus.textContent = '❌ 无效';
+                log(`❌ 测试失败: ${e.message}`, true);
+            }
+        });
+
+        analyzeBtn.addEventListener('click', async () => {
+            if(!originalWorkbook) { log('请先上传文件', true); return; }
+            const useDeepSeek = getSelectedMode() === 'deepseek';
+            if(useDeepSeek && !apiKeyInput.value.trim()) log('⚠️ 未填写API Key，降级本地规则', false);
+            
+            const threshold = parseFloat(thresholdSlider.value);
+            log(`⚙️ 当前本地规则阈值: ${threshold.toFixed(2)}`);
+            
+            const start = performance.now();
+            const modeDesc = useDeepSeek ? (apiKeyInput.value.trim() ? 'AI模式（仅处理“舆情标记=是”）' : 'AI模式（无Key降级为本地，且仅处理“舆情标记=是”）') : '离线模式（全量扫描所有行）';
+            log(`🚀 开始分析 (${modeDesc})`);
+            analyzeBtn.disabled = true;
+            statusBadge.textContent = '分析中...';
+            
+            try {
+                const wb = originalWorkbook;
+                const ws = wb.Sheets[sheetName];
+                const raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                if(raw.length < 2) throw new Error('无数据');
+                
+                const headers = raw[0];
+                const idxYq = headers.findIndex(h => h && h.toString().trim() === COL_YQ);
+                const idxTitle = headers.findIndex(h => h && h.toString().trim() === COL_TITLE);
+                const idxAbs = headers.findIndex(h => h && h.toString().trim() === COL_ABS);
+                
+                // 离线模式不依赖舆情标记列，但AI模式需要该列存在
+                if(useDeepSeek && idxYq === -1) throw new Error(`AI模式需包含列: ${COL_YQ}`);
+                
+                const newData = raw.map(row => [...row]);
+                let filtered = 0, marked = 0;
+                const previews = [];
+                
+                // 决定是否按“舆情标记=是”筛选 (仅AI模式)
+                const filterByYq = useDeepSeek && idxYq !== -1;
+                
+                for(let r=1; r<newData.length; r++) {
+                    const row = newData[r];
+                    
+                    // 若需要筛选且不满足条件，跳过
+                    if(filterByYq) {
+                        if(row[idxYq]?.toString().trim() !== '是') continue;
+                    }
+                    
+                    const title = idxTitle!==-1 ? row[idxTitle] : '';
+                    const abs = idxAbs!==-1 ? row[idxAbs] : '';
+                    const combined = (title + ' ' + abs).trim();
+                    if(!combined) continue;
+                    
+                    // 必须包含国网实体词
+                    if(!containsSgcc(combined)) continue;
+                    
+                    // 离线模式：统计所有扫描的行数；AI模式：统计符合条件的行数
+                    filtered++;
+                    
+                    let negScore = 0, usedAI = false;
+                    // 决定是否调用AI (AI模式且有Key)
+                    const callAI = useDeepSeek && apiKeyInput.value.trim();
+                    if(callAI) {
+                        try {
+                            negScore = await callDeepSeekSentiment(combined);
+                            usedAI = true;
+                            await new Promise(r => setTimeout(r, 80));
+                        } catch(e) {
+                            log(`⚠️ AI失败(行${r})，降级本地`, false);
+                            negScore = localSentiment(combined);
+                        }
+                    } else {
+                        negScore = localSentiment(combined);
+                    }
+                    
+                    if(negScore >= threshold) {
+                        row[1] = '是';
+                        row[2] = '一般';
+                        marked++;
+                        if(previews.length < 10) {
+                            previews.push({ row: r, t: title?.toString().slice(0,40), a: abs?.toString().slice(0,40), score: negScore.toFixed(2), ai: usedAI });
+                        }
+                    }
+                }
+                
+                totalFiltered = filtered; markedCount = marked;
+                const newWs = XLSX.utils.aoa_to_sheet(newData);
+                const newWb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(newWb, newWs, sheetName);
+                processedWorkbook = newWb;
+                
+                timeCostSpan.textContent = `${(performance.now()-start).toFixed(0)} ms`;
+                totalRowsSpan.textContent = totalFiltered;
+                markedRowsSpan.textContent = markedCount;
+                statusBadge.textContent = '完成';
+                log(`✅ 完成，扫描行: ${filtered}，标记负面: ${marked} 行 (阈值 ${threshold.toFixed(2)})`);
+                
+                let html = '<table><tr><th>行号</th><th>标题/内容</th><th>摘要</th><th>得分</th><th>引擎</th></tr>';
+                previews.forEach(p => { html += `<tr><td>${p.row}</td><td>${escapeHtml(p.t)}</td><td>${escapeHtml(p.a)}</td><td>${p.score}</td><td>${p.ai?'AI':'本地'}</td></tr>`; });
+                previewDiv.innerHTML = html + '</table>';
+                exportBtn.disabled = false;
+            } catch(e) {
+                log(`❌ 分析出错: ${e.message}`, true);
+                statusBadge.textContent = '失败';
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        function getSelectedMode() {
+            for(let radio of modeRadios) if(radio.checked) return radio.value;
+            return 'deepseek';
+        }
+
+        exportBtn.addEventListener('click', () => {
+            if(!processedWorkbook) return log('无结果', true);
+            const wbout = XLSX.write(processedWorkbook, { bookType:'xlsx', type:'array' });
+            const blob = new Blob([wbout], {type:'application/octet-stream'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `国网人资舆情_标注_${Date.now()}.xlsx`; a.click();
+            URL.revokeObjectURL(url); log('📥 导出成功');
+        });
+
+        log('🟢 工具已启动。离线模式全量扫描，AI模式仅处理“舆情标记=是”行。');
+        updateButtons();
+    })();
+</script>
+</body>
+</html>
