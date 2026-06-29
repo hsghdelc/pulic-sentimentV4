@@ -4,8 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>国网人资舆情筛查系统</title>
-<script src="./lib/xlsx.full.min.js"></script>
-<script src="./lib/exceljs.min.js"></script>
+<script>
+(function() {
+  var isElectron = typeof window !== 'undefined' && typeof window.process !== 'undefined';
+  function loadScript(src) {
+    var s = document.createElement('script');
+    s.src = src;
+    document.head.appendChild(s);
+  }
+  if (isElectron) {
+    loadScript('./lib/xlsx.full.min.js');
+    loadScript('./lib/exceljs.min.js');
+  } else {
+    loadScript('https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js');
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
+  }
+})();
+</script>
 <style>
 :root {
   --bg: #0d1b2a;
