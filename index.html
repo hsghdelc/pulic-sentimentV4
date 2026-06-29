@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>国网人资舆情筛查系统</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="./lib/xlsx.full.min.js"></script>
+<script src="./lib/exceljs.min.js"></script>
 <style>
 :root {
   --bg: #0d1b2a;
@@ -47,15 +47,18 @@ body {
 .topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border2);
-  padding: 0 28px;
-  height: 60px;
+  padding: 0 20px;
+  height: 52px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 100;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
 
 .topbar-logo {
@@ -65,8 +68,8 @@ body {
 }
 
 .logo-icon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   /* 去除原本的蓝绿色渐变背景和圆角，让 SVG 的原本样式完全展现出来 */
   display: flex;
   align-items: center;
@@ -75,14 +78,14 @@ body {
 }
 
 .logo-text {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text);
 }
 
 .logo-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text3);
   letter-spacing: 1px;
   margin-top: 1px;
@@ -90,16 +93,19 @@ body {
 
 .topbar-divider {
   width: 1px;
-  height: 28px;
+  height: 24px;
   background: var(--border);
-  margin: 0 4px;
+  margin: 0 2px;
+  flex-shrink: 0;
 }
 
 .topbar-actions {
   margin-left: auto;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+  flex-shrink: 0;
+  padding-left: 12px;
 }
 
 /* ── 主体布局 ── */
@@ -107,7 +113,7 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 52px);
 }
 
 /* ── 左侧边栏 ── */
@@ -296,15 +302,17 @@ select:focus { border-color: var(--accent); }
 .main-tabs {
   display: flex;
   gap: 0;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border2);
-  padding: 0 24px;
   flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
+.main-tabs::-webkit-scrollbar { display: none; }
+
 .main-tab {
-  padding: 14px 20px;
-  font-size: 13px;
+  padding: 16px 14px;
+  font-size: 12px;
   color: var(--text2);
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -323,7 +331,10 @@ select:focus { border-color: var(--accent); }
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* 面板 */
@@ -672,7 +683,7 @@ input[type="range"]::-moz-range-progress {
 /* 预览表格 */
 .preview-wrap {
   overflow: auto;
-  max-height: 380px;
+  max-height: 456px;
   border-radius: var(--radius);
   border: 1px solid var(--border2);
 }
@@ -841,6 +852,161 @@ input[type="range"]::-moz-range-progress {
 
 .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
 .empty-state p { font-size: 13px; line-height: 1.8; }
+
+/* ── 左侧边栏底部区域 ── */
+.sidebar-info-card {
+  flex-grow: 1; /* 强制占据下方所有剩余空间 */
+  margin-top: 0;
+  padding: 20px 16px;
+  background: var(--surface2);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.info-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+.info-card-url-wrapper {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.info-card-url {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  word-break: break-all;
+}
+
+.info-card-url:hover {
+  color: #fff;
+}
+
+/* 系统状态信息样式 */
+.info-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.meta-label {
+  color: var(--text3);
+}
+
+.meta-val.status-online {
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* ── 系统首页与国网 Logo 严格对齐左上角样式 ── */
+.hero-panel {
+  background: radial-gradient(circle at center top, var(--surface3) 0%, var(--surface) 100%);
+  border-bottom: none;
+}
+
+/* 欢迎页专用：全新正方形包裹容器 */
+.sgcc-logo-welcome-wrap {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+  display: block;
+}
+
+/* 让内部的 SVG 完美填满正方形 */
+.sgcc-logo-welcome-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.workflow-step {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.workflow-step:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.step-num {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  font-size: 48px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.03);
+  font-style: italic;
+  pointer-events: none;
+}
+
+.step-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.step-desc {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.6;
+}
+
+/* 响应式适配 */
+@media (max-width: 1100px) {
+  .workflow-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 </style>
 </head>
 <body>
@@ -874,6 +1040,16 @@ input[type="range"]::-moz-range-progress {
   <div id="topbarStatus" class="badge badge-default">
     <span class="dot dot-gray"></span> 等待上传
   </div>
+  <div class="topbar-divider"></div>
+  <nav class="main-tabs" id="topbarTabs">
+    <div class="main-tab active" data-tab="home">🏠 系统首页</div>
+    <div class="main-tab" data-tab="config">⚙️ 识别配置</div>
+    <div class="main-tab" data-tab="lexicon">📖 词库管理</div>
+    <div class="main-tab" data-tab="result">📋 识别结果</div>
+    <div class="main-tab" data-tab="log">🗒️ 运行日志</div>
+    <div class="main-tab" data-tab="mapping">📑 字段映射</div>
+    <div class="main-tab" data-tab="extract">🔍 内容解析</div>
+  </nav>
   <div class="topbar-actions">
     <button class="btn btn-ghost btn-sm" id="topImportBtn">⬆ 导入文件</button>
     <button class="btn btn-primary btn-sm" id="topExportBtn" disabled>⬇ 导出结果</button>
@@ -967,21 +1143,70 @@ input[type="range"]::-moz-range-progress {
       </div>
     </div>
 
+    <div class="sidebar-info-card">
+      <div class="info-card-group">
+        <div class="info-card-label">在线地址</div>
+        <div class="info-card-url-wrapper">
+          <a href="https://sgccyuqing.ccwu.cc" target="_blank" class="info-card-url">
+            <span>🌐</span> sgccyuqing.ccwu.cc
+          </a>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- 主内容 -->
   <div class="main">
-    <div class="main-tabs">
-      <div class="main-tab active" data-tab="config">⚙️ 识别配置</div>
-      <div class="main-tab" data-tab="lexicon">📖 词库管理</div>
-      <div class="main-tab" data-tab="result">📋 识别结果</div>
-      <div class="main-tab" data-tab="log">🗒️ 运行日志</div>
-    </div>
-
     <div class="main-content">
 
+      <!-- ── Tab: 系统首页 ── -->
+      <div class="tab-pane active" id="tab-home">
+
+        <div class="panel hero-panel" style="text-align: center; padding: 125px 24px 125px;">
+          <h1 style="font-size: 24px; color: var(--text); font-weight: 700; letter-spacing: 1px; margin-bottom: 32px;">欢迎使用 国网人资舆情筛查系统</h1>
+          <button class="btn btn-primary" onclick="document.querySelector('.main-tab[data-tab=\'config\']').click()" style="padding: 12px 32px; font-size: 15px;">
+            开始配置并使用
+          </button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <div class="icon">🛤️</div>
+            使用操作流程
+          </div>
+          <div class="workflow-grid">
+            <div class="workflow-step">
+              <div class="step-num">01</div>
+              <div class="step-icon">📤</div>
+              <div class="step-title">导入数据</div>
+              <div class="step-desc">在左侧边栏上传 .xlsx 格式的舆情原始数据表</div>
+            </div>
+            <div class="workflow-step">
+              <div class="step-num">02</div>
+              <div class="step-icon">⚙️</div>
+              <div class="step-title">规则配置</div>
+              <div class="step-desc">选择本地/AI模式，调整识别阈值或自定义映射列</div>
+            </div>
+            <div class="workflow-step">
+              <div class="step-num">03</div>
+              <div class="step-icon">⚡</div>
+              <div class="step-title">执行扫描</div>
+              <div class="step-desc">点击开始识别，系统将并发处理并实时显示进度</div>
+            </div>
+            <div class="workflow-step">
+              <div class="step-num">04</div>
+              <div class="step-icon">📊</div>
+              <div class="step-title">导出结果</div>
+              <div class="step-desc">预览负面数据，并导出带有三色关键词高亮的报表</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- ── Tab: 识别配置 ── -->
-      <div class="tab-pane active" id="tab-config">
+      <div class="tab-pane" id="tab-config">
 
         <!-- 本地模式配置 -->
         <div class="panel" id="localConfigPanel">
@@ -1051,6 +1276,7 @@ input[type="range"]::-moz-range-progress {
             <div class="form-row">
               <input type="password" id="apiKeyInput" placeholder="填写 API Key...">
               <button class="btn btn-secondary btn-sm" id="testKeyBtn">测试</button>
+              <button class="btn btn-primary btn-sm" id="saveKeyBtn">保存</button>
               <span id="keyStatus" class="badge badge-default">未验证</span>
             </div>
 
@@ -1170,6 +1396,89 @@ input[type="range"]::-moz-range-progress {
             <button class="btn btn-ghost btn-sm" id="clearLogBtn">清空日志</button>
           </div>
           <div class="log-container" id="logPanel"></div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-mapping">
+        <div class="panel">
+          <div class="panel-title">
+            <div class="icon">📑</div>
+            自定义分析列映射
+            <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:8px;">不选择则默认使用系统内置规则</span>
+          </div>
+
+          <div class="info-box" style="margin-bottom:16px;">
+            💡 <strong>系统默认逻辑：</strong>自动寻找列名包含「标题/微博内容」或「摘要」的列进行扫描。<br>
+            如果您的表格表头不符合默认规则，请在下方下拉框中指定需要分析的列。<strong>只要您在此处进行了任何选择，系统将优先只分析您选择的列。</strong>
+          </div>
+
+          <div id="mappingContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 40px; max-width: 860px;">
+            <div style="color:var(--text3); font-size:12px; grid-column: 1 / -1;">请先在左侧上传 Excel 文件...</div>
+          </div>
+
+          <div style="margin-top: 20px; max-width: 860px; display: flex;">
+            <button class="btn btn-ghost btn-sm" id="addMappingBtn" style="display: none; width: 100%; border: 1px dashed var(--border); justify-content: center; color: var(--text2);">
+              ＋ 添加分析列
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: 内容解析 ── -->
+      <div class="tab-pane" id="tab-extract">
+        <div class="panel">
+          <div class="panel-title">
+            <div class="icon">🔍</div>
+            URL 内容解析
+            <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:8px;">从原始数据中的链接自动提取网页文字</span>
+          </div>
+
+          <!-- web 端提示 -->
+          <div id="extractWebNotice" style="display:none; text-align:center; padding:80px 24px;">
+            <div style="font-size:48px; margin-bottom:20px;">🔒</div>
+            <div style="font-size:16px; color:var(--text2); font-weight:500;">网页端暂未开放，请通过桌面端使用</div>
+          </div>
+
+          <!-- exe 端功能区 -->
+          <div id="extractMainArea">
+            <div class="info-box" style="margin-bottom:16px;">
+              💡 系统将自动访问链接并提取页面文字内容。遇到需登录的网站时会弹出窗口供您登录。<br>
+              提取结果将写入每行固定新增列「抓取原文」中。请先在左侧上传 Excel 文件。
+            </div>
+
+            <div style="max-width:400px; margin-bottom:16px;">
+              <div style="font-size:12px; color:var(--text2); margin-bottom:8px;">选择包含 URL 的列</div>
+              <select id="extractColSelect" style="width:100%; padding:8px 12px; background:var(--surface3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none;">
+                <option value="">-- 请先上传 Excel 文件 --</option>
+              </select>
+            </div>
+
+            <div style="max-width:400px; margin-bottom:20px;">
+              <div style="font-size:12px; color:var(--text2); margin-bottom:8px;">并发请求数</div>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <input type="range" id="extractConcurrency" min="5" max="50" value="20" style="flex:1; --pct:33%;">
+                <span id="extractConcurrencyVal" style="font-size:13px; color:var(--text); min-width:30px;">20</span>
+              </div>
+              <div style="font-size:10px; color:var(--text3); margin-top:4px;">同时发起的网络请求数，越大越快（受目标网站限流约束）</div>
+            </div>
+
+            <button class="btn btn-primary" id="extractStartBtn" disabled>开始解析</button>
+
+            <div id="extractProgressWrap" style="display:none; margin-top:20px;">
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="extractProgressFill"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                <span id="extractProgressInfo" style="font-size:12px; color:var(--text2);"></span>
+                <span id="extractProgressPct" style="font-size:12px; color:var(--accent);"></span>
+              </div>
+              <div style="display:flex; gap:20px; margin-top:12px; font-size:12px;">
+                <span style="color:var(--success);">✅ 成功: <b id="extractStatSuccess">0</b></span>
+                <span style="color:var(--warn);">⚠️ 需登录: <b id="extractStatLogin">0</b></span>
+                <span style="color:var(--danger);">❌ 失败: <b id="extractStatFail">0</b></span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1880,9 +2189,10 @@ $('entityTextarea').addEventListener('scroll', () => {
   bd.scrollTop = ta.scrollTop; bd.scrollLeft = ta.scrollLeft;
 });
 
-// 确认词库修改：给出明确反馈
+// 确认词库修改：给出明确反馈并保存
 $('confirmLexiconBtn').addEventListener('click', () => {
   updateLexiconCounts();
+  saveConfig(); // 点击确认时，不仅更新内存，还写入本地缓存
   const entities = getLexicon($('entityTextarea'));
   let strong = 0;
   for (const e of entities) { if (isStrongEntity(e)) strong++; }
@@ -1979,6 +2289,12 @@ function loadFile(file) {
       currentSheetName = sheets[0];
       selectWrap.style.display = sheets.length > 1 ? '' : 'none';
 
+      // 抓取表头并渲染字段映射下拉框
+      const rawDataForHeaders = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      window.currentExcelHeaders = rawDataForHeaders.length > 0 ? rawDataForHeaders[0].map(h => String(h || '').trim()) : [];
+      renderMappingDropdowns(6); // 默认渲染 6 个，刚好凑成 3 行 2 列
+      populateExtractDropdown(); // 填充内容解析下拉框
+
       $('startBtn').disabled = false;
       setStatus('文件已加载', 'info');
       resultRows = [];
@@ -2008,6 +2324,90 @@ $('thresholdSlider').addEventListener('input', updateThresholdFill);
 updateThresholdFill();
 
 // ═══════════════════════════════════════════
+//  配置持久化（localStorage） - 修复版
+// ═══════════════════════════════════════════
+const STORAGE_KEY = 'yuqing_config';
+
+function saveConfig() {
+  const config = {
+    models: models.filter(m => !m.builtin),
+    activeModelId: activeModelId,
+    apiKeys: {},
+    // 将四个词库的内容也保存下来
+    lexicon: {
+      entity: $('entityTextarea').value,
+      domain: $('domainTextarea').value,
+      neg: $('negTextarea').value,
+      exempt: $('exemptTextarea').value
+    }
+  };
+
+  // 保存当前模型的API Key
+  models.forEach(m => {
+    const keyInput = $('apiKeyInput');
+    if (m.id === activeModelId && keyInput) {
+      config.apiKeys[m.id] = keyInput.value.trim();
+    }
+  });
+
+  // 保存额外的Key
+  const extraInput = $('extraKeysInput');
+  if (extraInput) {
+    config.extraKeys = extraInput.value.trim();
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+  log('配置及词库已保存到本地', 'ok');
+}
+
+function loadConfig() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return null;
+    return JSON.parse(saved);
+  } catch (e) {
+    return null;
+  }
+}
+
+function applyConfig(config) {
+  if (!config) return;
+  // 恢复自定义模型
+  if (config.models && Array.isArray(config.models)) {
+    config.models.forEach(m => {
+      if (!models.find(x => x.id === m.id)) {
+        models.push(m);
+      }
+    });
+  }
+  // 恢复活跃模型
+  if (config.activeModelId && models.find(m => m.id === config.activeModelId)) {
+    activeModelId = config.activeModelId;
+  }
+  // 恢复API Key
+  setTimeout(() => {
+    if (config.apiKeys) {
+      const currentKey = config.apiKeys[activeModelId];
+      if (currentKey) {
+        $('apiKeyInput').value = currentKey;
+      }
+    }
+    if (config.extraKeys) {
+      const extraInput = $('extraKeysInput');
+      if (extraInput) extraInput.value = config.extraKeys;
+    }
+  }, 100);
+
+  // 恢复词库数据
+  if (config.lexicon) {
+    if (config.lexicon.entity !== undefined) $('entityTextarea').value = config.lexicon.entity;
+    if (config.lexicon.domain !== undefined) $('domainTextarea').value = config.lexicon.domain;
+    if (config.lexicon.neg !== undefined) $('negTextarea').value = config.lexicon.neg;
+    if (config.lexicon.exempt !== undefined) $('exemptTextarea').value = config.lexicon.exempt;
+    updateLexiconCounts(); // 刷新 UI 统计
+  }
+}
+
+// ═══════════════════════════════════════════
 //  模型管理
 // ═══════════════════════════════════════════
 function renderModelList() {
@@ -2029,16 +2429,21 @@ function renderModelList() {
 
 window.selectModel = function(id) {
   activeModelId = id;
-  $('apiKeyInput').value = '';
+  // 尝试加载已保存的Key
+  const config = loadConfig();
+  const savedKey = config?.apiKeys?.[id] || '';
+  $('apiKeyInput').value = savedKey;
   $('keyStatus').className = 'badge badge-default';
-  $('keyStatus').textContent = '未验证';
+  $('keyStatus').textContent = savedKey ? '已加载保存的Key' : '未验证';
   renderModelList();
+  saveConfig();
 };
 
 window.removeModel = function(id) {
   models = models.filter(m => m.id !== id);
   if (activeModelId === id) activeModelId = models[0]?.id || 'deepseek';
   renderModelList();
+  saveConfig();
 };
 
 $('addModelBtn').addEventListener('click', () => {
@@ -2060,6 +2465,18 @@ $('confirmModelBtn').addEventListener('click', () => {
   activeModelId = id;
   $('addModelModal').classList.remove('open');
   renderModelList();
+  saveConfig();
+});
+
+// 保存API Key按钮
+$('saveKeyBtn').addEventListener('click', () => {
+  saveConfig();
+  $('keyStatus').className = 'badge badge-success';
+  $('keyStatus').textContent = '✓ 已保存';
+  setTimeout(() => {
+    $('keyStatus').className = 'badge badge-default';
+    $('keyStatus').textContent = '已保存';
+  }, 2000);
 });
 
 // API Key 测试
@@ -2305,6 +2722,14 @@ async function startAnalysis() {
   shouldStop = false;
   resultRows = [];
 
+  // 释放上一次导出的 Blob 缓存，防止内存泄漏
+  if (window._exportBlob) {
+    window._exportBlob = null;
+  }
+  if (window._extractBlob) {
+    window._extractBlob = null;
+  }
+
   $('startBtn').disabled = true;
   $('stopBtn').style.display = '';
   $('progressWrap').style.display = '';
@@ -2332,16 +2757,38 @@ async function startAnalysis() {
   }
 
   const headers = rawData[0].map(h => (h || '').toString().trim());
-  const idxTitle = headers.findIndex(h => h.includes('标题') || h.includes('微博内容'));
-  const idxAbs = headers.findIndex(h => h === '摘要');
   const idxYq = headers.findIndex(h => h.includes('是否舆情') || h.includes('舆情标记'));
 
-  log(`列映射 → 标题列:${idxTitle >= 0 ? headers[idxTitle]+'('+idxTitle+')' : '未找到'} | 摘要列:${idxAbs >= 0 ? headers[idxAbs]+'('+idxAbs+')' : '未找到'} | 是否舆情列:${idxYq >= 0 ? headers[idxYq]+'('+idxYq+')' : '未找到（B列）'}`, 'info');
+  // 检查用户是否在"字段映射"中进行了自定义选择
+  const mappingSelects = document.querySelectorAll('.mapping-select');
+  const customCols = [];
+  mappingSelects.forEach(sel => {
+    if (sel.value !== "") customCols.push(parseInt(sel.value, 10));
+  });
 
-  if (idxTitle < 0 && idxAbs < 0) {
-    log('未找到「标题/微博内容」或「摘要」列，请检查文件格式', 'err');
-    finishAnalysis(start);
-    return;
+  let targetCols = []; // 最终决定要分析的列集合
+
+  if (customCols.length > 0) {
+    // 方案 A：用户有自定义选择，严格遵循用户的选择
+    log(`检测到自定义字段映射，已覆盖系统默认规则，将扫描指定的 ${customCols.length} 列`, 'info');
+    targetCols = customCols.map(idx => ({ colIdx: idx, label: headers[idx] || `列${idx}` }));
+  } else {
+    // 方案 B：用户未选择，使用经典的默认探测逻辑
+    const idxTitle = headers.findIndex(h => h.includes('标题') || h.includes('微博内容'));
+    const idxAbs = headers.findIndex(h => h === '摘要');
+
+    log(`默认列映射 → 标题列:${idxTitle >= 0 ? headers[idxTitle]+'('+idxTitle+')' : '未找到'} | 摘要列:${idxAbs >= 0 ? headers[idxAbs]+'('+idxAbs+')' : '未找到'} | 结果列:${idxYq >= 0 ? headers[idxYq]+'('+idxYq+')' : '默认 B 列'}`, 'info');
+
+    if (idxTitle < 0 && idxAbs < 0) {
+      log('未找到默认分析列（标题/摘要），请去「字段映射」中手动指定要分析的列。', 'err');
+      finishAnalysis(start);
+      return;
+    }
+
+    targetCols = [
+      { colIdx: idxTitle, label: '标题' },
+      { colIdx: idxAbs, label: '摘要' }
+    ];
   }
 
   const requireEntity = $('requireEntity').checked;
@@ -2385,18 +2832,18 @@ async function startAnalysis() {
     }
 
     const row = rawData[r];
-    const titleText = idxTitle >= 0 ? String(row[idxTitle] || '') : '';
-    const absText = idxAbs >= 0 ? String(row[idxAbs] || '') : '';
 
     let rowHit = false;
     const cellHits = [];
 
-    // 逐字段独立判断
-    for (const { text, colIdx, label } of [
-      { text: titleText, colIdx: idxTitle, label: '标题' },
-      { text: absText, colIdx: idxAbs, label: '摘要' }
-    ]) {
-      if (!text || colIdx < 0) continue;
+    // 逐字段独立判断（兼容默认与自定义）
+    for (const target of targetCols) {
+      const colIdx = target.colIdx;
+      if (colIdx < 0 || colIdx === undefined) continue;
+
+      const text = String(row[colIdx] || '');
+      const label = target.label;
+      if (!text) continue;
 
       // 实体词门槛：强实体直接放行；弱实体须与领域词邻近共现
       if (requireEntity && !entityGate(text, strongEntities, weakEntities, domainList, proximity)) continue;
@@ -2449,13 +2896,23 @@ async function startAnalysis() {
       async function processOne(i) {
         const rr = resultRows[i];
         const row = rr.rowData;
-        const titleText = idxTitle >= 0 ? String(row[idxTitle] || '') : '';
-        const absText = idxAbs >= 0 ? String(row[idxAbs] || '') : '';
-        const prompt = buildAIPrompt(titleText, absText);
-        const key = keys[(keyCursor++) % keys.length];   // 轮询分配 Key
+
         try {
+          // 修复：动态遍历 targetCols（尊重用户的自定义字段映射）
+          let combinedContent = '';
+          for (const target of targetCols) {
+            if (target.colIdx >= 0) {
+              const text = String(row[target.colIdx] || '').trim();
+              if (text) combinedContent += `【${target.label}】：${text}\n`;
+            }
+          }
+
+          const prompt = buildAIPrompt(combinedContent);
+          const key = keys[(keyCursor++) % keys.length];   // 轮询分配 Key
+
           const reply = await callLLM(model, key, prompt, systemP);
           const json = parseAIReply(reply);
+
           if (json && json.overall_negative === true) {
             rr.aiConfirmed = true;
             aiMarked++;
@@ -2493,9 +2950,25 @@ async function startAnalysis() {
   }
 
   // ── 写入 xlsx（使用 ExcelJS 实现三类关键词对应颜色）──
-  log('生成标注文件...', 'info');
+  log('开始生成标注文件...', 'info');
+
+  // 保持进度条面板显示
+  $('progressWrap').style.display = '';
+  $('stopBtn').style.display = 'none'; // 导出阶段不可中止
+
   try {
-    window._exportBlob = await buildOutputWorkbookEJS(idxYq, hitInfo, resultRows, currentMode === 'ai');
+    // 传入进度回调函数，实时更新 UI
+    window._exportBlob = await buildOutputWorkbookEJS(
+      idxYq,
+      hitInfo,
+      resultRows,
+      currentMode === 'ai',
+      (msg, pct) => {
+        $('progressFill').style.width = pct + '%';
+        $('progressInfo').textContent = msg;
+        $('progressPct').textContent = pct + '%';
+      }
+    );
     window._exportWb = null;
   } catch (e) {
     log('标注文件生成失败: ' + e.message, 'err');
@@ -2542,7 +3015,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ═══════════════════════════════════════════
 //  AI Prompt 构建 + 解析
 // ═══════════════════════════════════════════
-function buildAIPrompt(title, abs) {
+function buildAIPrompt(content) {
   return `请判断以下内容是否包含针对国家电网公司在【招聘过程】（笔试、面试、录用、公平性等）或【薪酬管理】（工资、奖金、绩效、福利等）方面的明确负面评价、投诉或质疑。
 
 判断标准：
@@ -2551,11 +3024,10 @@ function buildAIPrompt(title, abs) {
 - 不确定时倾向于判断为非负面
 
 待判断内容：
-【标题/正文】：${title || '（空）'}
-【摘要】：${abs || '（空）'}
+${content || '（空）'}
 
 请严格按如下 JSON 格式输出，不输出任何其他文字：
-{"title_negative":true/false,"abstract_negative":true/false,"overall_negative":true/false,"reason":"简要说明（20字内）"}`;
+{"overall_negative":true/false,"reason":"简要说明（20字内）"}`;
 }
 
 function parseAIReply(reply) {
@@ -2635,30 +3107,34 @@ function buildRichText(text, entityHits, domainHits, negHits) {
 }
 
 // ═══════════════════════════════════════════
-//  生成输出 Workbook（ExcelJS：保留原文件 + 三色关键词）
+//  生成输出 Workbook（优化版：时间分片防假死）
 //  返回 Blob，供 doExport 直接下载
 // ═══════════════════════════════════════════
-async function buildOutputWorkbookEJS(idxYq, hitInfo, aiRows, isAIMode) {
+async function buildOutputWorkbookEJS(idxYq, hitInfo, aiRows, isAIMode, onProgress) {
   if (!window._origArrayBuffer) throw new Error('原始文件缓存丢失，请重新上传');
 
   const sheetName = currentSheetName || wb.SheetNames[0];
-  const yqColIdx = idxYq >= 0 ? idxYq : 1;          // 0-based；默认 B 列
-  const yqColEJS = yqColIdx + 1;                    // ExcelJS 1-based
+  const yqColIdx = idxYq >= 0 ? idxYq : 1;
+  const yqColEJS = yqColIdx + 1;
 
   const aiConfirmedSet = new Set(aiRows.filter(r => r.aiConfirmed).map(r => r.rowIdx));
-  // rowIdx(0-based) → hitCells，方便取每个命中单元格的关键词
   const cellsByRow = new Map();
   for (const [rowIdx, info] of hitInfo) cellsByRow.set(rowIdx, info.cells);
 
-  // ExcelJS 重新读取原始 buffer，最大限度保留原格式、列宽、数据
+  if (onProgress) onProgress('正在加载原始文档...', 10);
   const ejsWb = new ExcelJS.Workbook();
   await ejsWb.xlsx.load(window._origArrayBuffer.slice(0));
 
   let ws = ejsWb.getWorksheet(sheetName) || ejsWb.worksheets[0];
   if (!ws) throw new Error('未找到工作表');
 
+  if (onProgress) onProgress('正在渲染高亮结果...', 30);
+
+  let processedCount = 0;
+  const totalHits = cellsByRow.size;
+
   for (const [rowIdx, cells] of cellsByRow) {
-    const excelRow = rowIdx + 1; // 0-based 数据行 → ExcelJS 1-based
+    const excelRow = rowIdx + 1;
     const isAIConfirmed = aiConfirmedSet.has(rowIdx);
 
     // B 列写"是"：本地=黑色；AI确认=红色加粗
@@ -2674,13 +3150,33 @@ async function buildOutputWorkbookEJS(idxYq, hitInfo, aiRows, isAIMode) {
     for (const { colIdx, hitWords, entityHits, domainHits } of cells) {
       if (colIdx < 0) continue;
       const cell = ws.getCell(excelRow, colIdx + 1);
+      // 跳过公式单元格，避免破坏底层 XML 结构
+      if (cell.formula) continue;
       const text = (cell.text != null ? String(cell.text) : (cell.value != null ? String(cell.value) : ''));
       const rt = buildRichText(text, entityHits, domainHits, hitWords);
-      if (rt) cell.value = rt;           // 富文本分段着色
+      if (rt) cell.value = rt;
+    }
+
+    processedCount++;
+    // 核心优化：每渲染 50 行，主动释放一次主线程，避免 UI 卡死
+    if (processedCount % 50 === 0) {
+      if (onProgress) {
+        // 估算渲染进度 (30% ~ 70% 之间)
+        const renderPct = 30 + Math.round((processedCount / totalHits) * 40);
+        onProgress(`正在渲染高亮... ${processedCount}/${totalHits}`, renderPct);
+      }
+      await sleep(0);
     }
   }
 
+  if (onProgress) onProgress('正在封装导出文件 (这可能需要几秒钟)...', 80);
+
+  // 留出时间让浏览器渲染上一句提示
+  await sleep(50);
+
   const buf = await ejsWb.xlsx.writeBuffer();
+  if (onProgress) onProgress('文件生成完毕', 100);
+
   return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
@@ -2736,15 +3232,19 @@ function renderPreview(rows) {
 //  导出
 // ═══════════════════════════════════════════
 function doExport() {
-  if (!window._exportBlob) { alert('请先运行识别（或标注文件生成失败，请查看日志）'); return; }
+  // 优先导出含抓取原文的版本，其次导出识别结果版本
+  const blob = window._extractBlob || window._exportBlob;
+  const fileName = window._extractBlob ? window._extractFileName : (window._exportFileName || '识别结果.xlsx');
+
+  if (!blob) { alert('请先运行识别或内容解析'); return; }
   try {
-    const url = URL.createObjectURL(window._exportBlob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = window._exportFileName || '识别结果.xlsx';
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
-    log(`文件已导出: ${window._exportFileName}`, 'ok');
+    log(`文件已导出: ${fileName}`, 'ok');
   } catch (e) {
     log('导出失败: ' + e.message, 'err');
   }
@@ -2756,9 +3256,240 @@ $('topExportBtn').addEventListener('click', doExport);
 $('clearLogBtn').addEventListener('click', () => { $('logPanel').innerHTML = ''; });
 
 // ═══════════════════════════════════════════
+//  字段映射 UI 逻辑
+// ═══════════════════════════════════════════
+function renderMappingDropdowns(count) {
+  const container = $('mappingContainer');
+  container.innerHTML = ''; // 清空原有内容
+  $('addMappingBtn').style.display = 'inline-flex'; // 显示添加按钮
+
+  for (let i = 0; i < count; i++) {
+    addMappingRow();
+  }
+}
+
+function addMappingRow() {
+  const container = $('mappingContainer');
+  const headers = window.currentExcelHeaders || [];
+  const index = container.children.length + 1;
+
+  const row = document.createElement('div');
+  row.className = 'form-row';
+
+  // 生成下拉选项
+  let optionsHtml = `<option value="">-- 不指定 (保持系统默认) --</option>`;
+  headers.forEach((h, idx) => {
+    optionsHtml += `<option value="${idx}">${escHtml(h || `列 ${idx + 1}`)}</option>`;
+  });
+
+  row.innerHTML = `
+    <div class="form-label" style="width: 60px;">分析列 ${index}</div>
+    <select class="mapping-select" style="flex:1; padding:8px 12px; background:var(--surface3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none;">
+      ${optionsHtml}
+    </select>
+  `;
+  container.appendChild(row);
+}
+
+// 绑定添加按钮事件
+$('addMappingBtn').addEventListener('click', addMappingRow);
+
+// ═══════════════════════════════════════════
+//  内容解析功能
+// ═══════════════════════════════════════════
+
+// 检测是否在 Electron 环境中
+const isElectron = typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined';
+
+// web 端显示提示，exe 端显示功能区
+if (!isElectron) {
+  $('extractWebNotice').style.display = '';
+  $('extractMainArea').style.display = 'none';
+}
+
+// 并发数滑块
+function updateExtractConcurrencyFill() {
+  const s = $('extractConcurrency');
+  const pct = ((s.value - s.min) / (s.max - s.min)) * 100;
+  s.style.setProperty('--pct', pct + '%');
+  $('extractConcurrencyVal').textContent = s.value;
+}
+$('extractConcurrency').addEventListener('input', updateExtractConcurrencyFill);
+updateExtractConcurrencyFill();
+
+// 上传文件后填充下拉框
+function populateExtractDropdown() {
+  if (!window.currentExcelHeaders || !window.currentExcelHeaders.length) return;
+  const sel = $('extractColSelect');
+  sel.innerHTML = '<option value="">-- 请选择包含 URL 的列 --</option>';
+  window.currentExcelHeaders.forEach((h, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = h || `列 ${idx + 1}`;
+    sel.appendChild(opt);
+  });
+  // 按钮保持禁用，等用户选择列后才启用
+  $('extractStartBtn').disabled = true;
+}
+
+// 下拉框选择变化
+$('extractColSelect').addEventListener('change', () => {
+  $('extractStartBtn').disabled = !$('extractColSelect').value;
+});
+
+// 开始解析
+$('extractStartBtn').addEventListener('click', async () => {
+  if (!wb) { alert('请先上传 Excel 文件'); return; }
+  const colIdx = parseInt($('extractColSelect').value, 10);
+  if (isNaN(colIdx)) { alert('请选择包含 URL 的列'); return; }
+
+  const concurrency = parseInt($('extractConcurrency').value, 10) || 20;
+  const sheetName = currentSheetName || wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rawData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+  if (rawData.length < 2) { alert('数据为空'); return; }
+
+  // 收集所有 URL
+  const urlTasks = [];
+  for (let r = 1; r < rawData.length; r++) {
+    const cellText = String(rawData[r][colIdx] || '').trim();
+    const urlMatch = cellText.match(/https?:\/\/[^\s<>"]+/);
+    if (urlMatch) {
+      urlTasks.push({ rowIdx: r, url: urlMatch[0] });
+    }
+  }
+
+  if (!urlTasks.length) { alert('所选列中未找到 URL'); return; }
+
+  // UI 状态
+  $('extractStartBtn').disabled = true;
+  $('extractProgressWrap').style.display = '';
+  $('extractStatSuccess').textContent = '0';
+  $('extractStatLogin').textContent = '0';
+  $('extractStatFail').textContent = '0';
+
+  const total = urlTasks.length;
+  let done = 0, success = 0, login = 0, fail = 0;
+
+  log(`内容解析开始 → ${total} 条 URL | 并发 ${concurrency}`, 'info');
+
+  try {
+    // 通过 IPC 发送给主进程处理
+    const results = await window.electronAPI.extractUrls(urlTasks, concurrency, (progress) => {
+      // 登录通知消息不计入进度
+      if (progress.message) {
+        log(progress.message, 'warn');
+        return;
+      }
+
+      // 仅对有 rowIdx 的实际结果计数，且不超过总数
+      if (progress.rowIdx !== undefined && done < total) {
+        done++;
+        if (progress.status === 'success') success++;
+        else if (progress.status === 'login') login++;
+        else fail++;
+
+        const pct = Math.min(100, Math.round((done / total) * 100));
+        $('extractProgressFill').style.width = pct + '%';
+        $('extractProgressInfo').textContent = `解析中 ${done} / ${total}`;
+        $('extractProgressPct').textContent = pct + '%';
+        $('extractStatSuccess').textContent = success;
+        $('extractStatLogin').textContent = login;
+        $('extractStatFail').textContent = fail;
+      }
+    });
+
+    // 写入 Excel
+    log(`内容解析完成 → 成功: ${success} | 需登录: ${login} | 失败: ${fail}`, 'ok');
+    writeExtractResults(results);
+
+  } catch (e) {
+    log('内容解析失败: ' + e.message, 'err');
+  }
+
+  $('extractStartBtn').disabled = false;
+  log('内容解析完成 ✓', 'ok');
+});
+
+// 将提取结果写入 Excel（使用 ExcelJS 保留原格式）
+async function writeExtractResults(results) {
+  if (!results || !results.length) { log('没有提取结果可写入', 'warn'); return; }
+  if (!window._origArrayBuffer) { log('原始文件缓存丢失，无法写入', 'err'); return; }
+
+  // 调试日志
+  const successCount = results.filter(r => r.status === 'success' && r.text).length;
+  log(`准备写入 ${results.length} 条结果（其中成功提取 ${successCount} 条）`, 'info');
+
+  try {
+    const sheetName = currentSheetName || wb.SheetNames[0];
+
+    // 使用 ExcelJS 读取原始文件，保留所有格式
+    const ejsWb = new ExcelJS.Workbook();
+    await ejsWb.xlsx.load(window._origArrayBuffer.slice(0));
+
+    let ws = ejsWb.getWorksheet(sheetName) || ejsWb.worksheets[0];
+    if (!ws) { log('未找到工作表', 'err'); return; }
+
+    // 获取最大列数
+    let maxCol = 0;
+    ws.eachRow((row) => {
+      let lastCol = 0;
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => { lastCol = colNumber; });
+      if (lastCol > maxCol) maxCol = lastCol;
+    });
+
+    const writeCol = maxCol + 1; // ExcelJS 1-based
+
+    // 写入表头
+    const headerCell = ws.getCell(1, writeCol);
+    headerCell.value = '抓取原文';
+    headerCell.font = { name: 'Microsoft YaHei', bold: true };
+
+    // 写入提取结果
+    let writtenCount = 0;
+    for (const result of results) {
+      const rowNum = result.rowIdx + 1; // rowIdx 是 0-based，ExcelJS 是 1-based
+      const cell = ws.getCell(rowNum, writeCol);
+      const textToWrite = result.text || '提取失败';
+      cell.value = textToWrite;
+      cell.font = { name: 'Microsoft YaHei' };
+      writtenCount++;
+
+      // 调试：前3条记录详细日志
+      if (writtenCount <= 3) {
+        log(`写入行${rowNum}列${writeCol}: "${textToWrite.substring(0, 30)}..."`, 'info');
+      }
+    }
+
+    // 生成独立的导出 Blob
+    const buf = await ejsWb.xlsx.writeBuffer();
+    window._extractBlob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    window._extractFileName = (originalFileName || '数据') + '-含抓取原文.xlsx';
+
+    log(`已将 ${writtenCount} 条结果写入「抓取原文」列（第 ${writeCol} 列）`, 'ok');
+    log('含抓取原文的文件已生成，请点击"导出结果"下载', 'ok');
+
+    // 启用导出按钮
+    $('topExportBtn').disabled = false;
+
+  } catch (e) {
+    log('写入提取结果失败: ' + e.message, 'err');
+  }
+}
+
+// ═══════════════════════════════════════════
 //  初始化
 // ═══════════════════════════════════════════
 initLexicon();
+
+// 加载保存的配置
+const savedConfig = loadConfig();
+if (savedConfig) {
+  applyConfig(savedConfig);
+  log('已加载保存的配置（模型和API Key）', 'ok');
+}
+
 renderModelList();
 log('系统就绪。请上传 .xlsx 原始数据文件开始使用。', 'ok');
 log('支持功能：本地词库识别（三类关键词精准标色）+ AI二次核验（DeepSeek/自定义模型）', 'info');
