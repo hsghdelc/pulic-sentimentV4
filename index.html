@@ -1449,15 +1449,19 @@ input[type="range"]::-moz-range-progress {
           </div>
 
           <!-- web 端提示 -->
-          <div id="extractWebNotice" style="display:none; text-align:center; padding:80px 24px;">
+          <div id="extractWebNotice" style="display:none; text-align:center; padding:60px 24px;">
             <div style="font-size:48px; margin-bottom:20px;">🔒</div>
-            <div style="font-size:16px; color:var(--text2); font-weight:500;">网页端暂未开放，请通过桌面端使用</div>
+            <div style="font-size:16px; color:var(--text2); font-weight:500; margin-bottom:20px;">网页端暂未开放，请通过桌面端使用</div>
+            <a href="https://github.com/hsghdelc/yuqingsgccexe" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:8px; padding:10px 24px; background:linear-gradient(135deg, var(--accent2), var(--accent)); color:#fff; font-size:14px; font-weight:600; border-radius:8px; text-decoration:none; box-shadow:0 2px 12px rgba(0,180,216,0.3); transition:all 0.2s;">
+              ⬇ 下载桌面端
+            </a>
+            <div style="font-size:11px; color:var(--text3); margin-top:12px;">GitHub 开源 · 支持 Windows</div>
           </div>
 
           <!-- exe 端功能区 -->
           <div id="extractMainArea">
             <div class="info-box" style="margin-bottom:16px;">
-              💡 系统将自动访问链接并提取页面文字内容。遇到需登录的网站时会弹出窗口供您登录。<br>
+              💡 系统将自动访问链接并提取页面文字内容。<strong>建议在解析前先登录常用网站</strong>以提高提取成功率。<br>
               提取结果将写入每行固定新增列「抓取原文」中。请先在左侧上传 Excel 文件。
             </div>
 
@@ -1466,6 +1470,13 @@ input[type="range"]::-moz-range-progress {
               <select id="extractColSelect" style="width:100%; padding:8px 12px; background:var(--surface3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none;">
                 <option value="">-- 请先上传 Excel 文件 --</option>
               </select>
+            </div>
+
+            <!-- 前置登录区域 -->
+            <div id="preLoginSection" style="margin-bottom:20px;">
+              <div style="font-size:12px; color:var(--text2); margin-bottom:10px;">🔐 常用网站登录（可选，提高提取成功率）</div>
+              <div id="preLoginGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:8px;">
+              </div>
             </div>
 
             <div style="max-width:400px; margin-bottom:20px;">
@@ -1491,6 +1502,21 @@ input[type="range"]::-moz-range-progress {
                 <span style="color:var(--success);">✅ 成功: <b id="extractStatSuccess">0</b></span>
                 <span style="color:var(--warn);">⚠️ 需登录: <b id="extractStatLogin">0</b></span>
                 <span style="color:var(--danger);">❌ 失败: <b id="extractStatFail">0</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 登录确认弹窗 -->
+          <div id="loginConfirmOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:28px; width:420px; max-width:95vw; box-shadow:0 4px 24px rgba(0,0,0,0.4);">
+              <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:12px;">🔐 需要登录</div>
+              <div style="font-size:13px; color:var(--text2); margin-bottom:16px; line-height:1.6;">
+                解析过程中检测到需要登录的网站：<strong id="loginDomainName" style="color:var(--accent);"></strong><br>
+                请在弹出的浏览器窗口中完成登录，然后点击下方按钮继续。
+              </div>
+              <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn btn-ghost btn-sm" id="cancelLoginBtn">跳过此站点</button>
+                <button class="btn btn-primary btn-sm" id="confirmLoginBtn">✓ 我已登录，继续</button>
               </div>
             </div>
           </div>
@@ -3293,6 +3319,71 @@ if (!isElectron) {
   $('extractMainArea').style.display = 'none';
 }
 
+// 常用需登录网站列表
+const KNOWN_SITES = [
+  { name: '微博', domain: 'weibo.com', url: 'https://weibo.com', icon: '📱' },
+  { name: '今日头条', domain: 'toutiao.com', url: 'https://www.toutiao.com', icon: '📰' },
+  { name: '抖音', domain: 'douyin.com', url: 'https://www.douyin.com', icon: '🎵' },
+  { name: '知乎', domain: 'zhihu.com', url: 'https://www.zhihu.com', icon: '💡' },
+  { name: '百家号', domain: 'baijiahao.baidu.com', url: 'https://baijiahao.baidu.com', icon: '📝' },
+  { name: '小红书', domain: 'xiaohongshu.com', url: 'https://www.xiaohongshu.com', icon: '📕' }
+];
+
+// 初始化前置登录区域
+function initPreLoginGrid() {
+  const grid = $('preLoginGrid');
+  if (!grid || !isElectron) return;
+  grid.innerHTML = '';
+
+  KNOWN_SITES.forEach(site => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:all 0.2s;';
+    card.id = `prelogin-${site.domain}`;
+    card.innerHTML = `
+      <span style="font-size:18px;">${site.icon}</span>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${site.name}</div>
+        <div style="font-size:10px; color:var(--text3);" id="prelogin-status-${site.domain}">未登录</div>
+      </div>
+      <span id="prelogin-check-${site.domain}" style="font-size:14px; display:none;">✅</span>
+    `;
+    card.addEventListener('click', () => {
+      window.electronAPI.openLoginWindow(site.name, site.url);
+      // 3秒后检查登录状态
+      setTimeout(() => checkSiteLoginStatus(site), 3000);
+    });
+    card.addEventListener('mouseenter', () => { card.style.borderColor = 'var(--accent)'; });
+    card.addEventListener('mouseleave', () => { card.style.borderColor = 'var(--border)'; });
+    grid.appendChild(card);
+  });
+}
+
+// 检查单个站点登录状态
+async function checkSiteLoginStatus(site) {
+  if (!isElectron) return;
+  try {
+    const loggedIn = await window.electronAPI.checkDomainLogin(site.domain);
+    const statusEl = $(`prelogin-status-${site.domain}`);
+    const checkEl = $(`prelogin-check-${site.domain}`);
+    if (loggedIn) {
+      if (statusEl) statusEl.textContent = '已登录';
+      if (statusEl) statusEl.style.color = 'var(--success)';
+      if (checkEl) checkEl.style.display = '';
+    }
+  } catch (e) {}
+}
+
+// 检查所有站点登录状态
+async function checkAllSiteLoginStatus() {
+  for (const site of KNOWN_SITES) {
+    await checkSiteLoginStatus(site);
+  }
+}
+
+// 初始化
+initPreLoginGrid();
+if (isElectron) checkAllSiteLoginStatus();
+
 // 并发数滑块
 function updateExtractConcurrencyFill() {
   const s = $('extractConcurrency');
@@ -3314,14 +3405,36 @@ function populateExtractDropdown() {
     opt.textContent = h || `列 ${idx + 1}`;
     sel.appendChild(opt);
   });
-  // 按钮保持禁用，等用户选择列后才启用
   $('extractStartBtn').disabled = true;
 }
 
-// 下拉框选择变化
 $('extractColSelect').addEventListener('change', () => {
   $('extractStartBtn').disabled = !$('extractColSelect').value;
 });
+
+// 登录确认弹窗逻辑
+let loginResolve = null;
+
+$('confirmLoginBtn').addEventListener('click', () => {
+  const domain = $('loginDomainName').textContent;
+  $('loginConfirmOverlay').style.display = 'none';
+  if (isElectron) window.electronAPI.confirmLogin(domain);
+  if (loginResolve) { loginResolve(true); loginResolve = null; }
+});
+
+$('cancelLoginBtn').addEventListener('click', () => {
+  const domain = $('loginDomainName').textContent;
+  $('loginConfirmOverlay').style.display = 'none';
+  if (isElectron) window.electronAPI.cancelLogin(domain);
+  if (loginResolve) { loginResolve(false); loginResolve = null; }
+});
+
+// 显示登录确认弹窗
+function showLoginConfirm(domain) {
+  $('loginDomainName').textContent = domain;
+  $('loginConfirmOverlay').style.display = 'flex';
+  return new Promise(resolve => { loginResolve = resolve; });
+}
 
 // 开始解析
 $('extractStartBtn').addEventListener('click', async () => {
@@ -3336,7 +3449,6 @@ $('extractStartBtn').addEventListener('click', async () => {
 
   if (rawData.length < 2) { alert('数据为空'); return; }
 
-  // 收集所有 URL
   const urlTasks = [];
   for (let r = 1; r < rawData.length; r++) {
     const cellText = String(rawData[r][colIdx] || '').trim();
@@ -3348,7 +3460,6 @@ $('extractStartBtn').addEventListener('click', async () => {
 
   if (!urlTasks.length) { alert('所选列中未找到 URL'); return; }
 
-  // UI 状态
   $('extractStartBtn').disabled = true;
   $('extractProgressWrap').style.display = '';
   $('extractStatSuccess').textContent = '0';
@@ -3361,15 +3472,21 @@ $('extractStartBtn').addEventListener('click', async () => {
   log(`内容解析开始 → ${total} 条 URL | 并发 ${concurrency}`, 'info');
 
   try {
-    // 通过 IPC 发送给主进程处理
     const results = await window.electronAPI.extractUrls(urlTasks, concurrency, (progress) => {
-      // 登录通知消息不计入进度
+      // 需要登录的通知
+      if (progress.needLogin) {
+        log(`需要登录: ${progress.domain}`, 'warn');
+        showLoginConfirm(progress.domain);
+        return;
+      }
+
+      // 普通消息
       if (progress.message) {
         log(progress.message, 'warn');
         return;
       }
 
-      // 仅对有 rowIdx 的实际结果计数，且不超过总数
+      // 实际结果
       if (progress.rowIdx !== undefined && done < total) {
         done++;
         if (progress.status === 'success') success++;
@@ -3386,7 +3503,6 @@ $('extractStartBtn').addEventListener('click', async () => {
       }
     });
 
-    // 写入 Excel
     log(`内容解析完成 → 成功: ${success} | 需登录: ${login} | 失败: ${fail}`, 'ok');
     writeExtractResults(results);
 
