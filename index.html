@@ -1632,11 +1632,17 @@ const DEFAULT_ENTITIES = `国家电网
 国网河北
 国网山西
 国网内蒙古
-电力人
+国网员工
 网格员
-客服员工
-一线班组
-基层员工`;
+国网客服
+国网班组
+国网基层
+95598
+网上国网
+电业所
+供电服务公司
+张智刚
+张文峰`;
 
 const DEFAULT_DOMAIN = `工资
 发钱
@@ -1654,11 +1660,6 @@ const DEFAULT_DOMAIN = `工资
 降薪
 农电工
 疗养
-负责人
-董事长
-书记
-高管
-高层
 医保
 招聘
 校招
@@ -1760,31 +1761,6 @@ const DEFAULT_DOMAIN = `工资
 统考
 调剂公告
 人资部
-HR
-招聘专员
-面试官
-考务人员
-纪检组
-工会
-申诉渠道
-劳务公司
-派遣公司
-外包公司
-省公司
-市局
-县局
-基层单位
-离职
-辞职
-劝退
-裁员
-优化
-末位淘汰
-待岗
-调岗
-降职
-免职
-处分
 宣讲会
 双选会
 笔试大纲
@@ -1804,12 +1780,6 @@ HR
 职级晋升
 职称评审
 技能鉴定
-培训
-轮训
-挂职
-借调
-跟班学习
-师徒制
 年薪制
 协议工资
 项目工资
@@ -1827,14 +1797,29 @@ HR
 投诉举报
 信访
 申诉
-复议`;
+复议
+萝卜招聘
+虚假招聘
+定向生
+国调
+网调
+体检争议
+政审争议
+落户纠纷
+岗位不符
+高薪垄断
+密薪制
+三项制度改革
+负责人薪酬
+账外收入
+违规津补贴
+超工资总额
+新老员工倒挂
+以偏概全
+内部文件外流
+员工爆料`;
 
-const DEFAULT_NEG = `差
-烂
-坑
-垃圾
-黑
-暗箱
+const DEFAULT_NEG = `暗箱
 不公
 歧视
 压榨
@@ -1864,12 +1849,7 @@ const DEFAULT_NEG = `差
 推诿
 刁难
 不作为
-低
-少
 缩水
-减少
-降低
-下调
 内定
 萝卜
 关系户
@@ -1879,14 +1859,12 @@ const DEFAULT_NEG = `差
 侵吞
 拖延
 不透明
-差距
 绩效不公
 福利取消
 不涨薪
 虚假承诺
 萝卜坑
 黑幕
-歧视
 不公平
 虚假
 毁约
@@ -1895,20 +1873,10 @@ const DEFAULT_NEG = `差
 隐瞒
 过场
 无效
-极其
 严重
-十分
-非常
-特别
-简直
-太
-超
-巨
-爆
 炸裂
 崩溃
 无语
-离谱
 荒唐
 可笑
 恶心
@@ -1919,15 +1887,10 @@ const DEFAULT_NEG = `差
 憋屈
 心酸
 心累
-失望
-寒心
 凉心
-伤心
-难过
 气愤
 恼火
 暴怒
-抑郁
 焦虑
 烦躁
 不爽
@@ -1943,7 +1906,6 @@ const DEFAULT_NEG = `差
 打太极
 装死
 失联
-消失
 拖延症
 磨洋工
 敷衍了事
@@ -1970,7 +1932,6 @@ const DEFAULT_NEG = `差
 淘汰
 出局
 刷掉
-不要
 拒绝
 退回
 驳回
@@ -2031,17 +1992,10 @@ PUA
 空头支票
 白嫖
 套路深
-水深
 雷区
 踩坑
 避雷
 拉胯
-要命
-想骂人
-心寒到底
-凉透
-无语至极
-巨坑
 天坑
 劝退警告
 降薪
@@ -2067,20 +2021,25 @@ PUA
 可耻
 丢人
 糟糕
-太差
 极差
-非常差
-非常低
 收入低
 待遇低
 工资低
 薪资低
-不满意
-不合格
-惊人
-不符合
-没有保障
-无保障`;
+萝卜招聘
+虚假招聘
+体检争议
+政审争议
+新老员工倒挂
+以偏概全
+密薪制
+高薪垄断
+违规津补贴
+账外收入
+员工爆料
+负责人高薪
+三项制度改革
+薪酬优化`;
 
 // 复合负面短语（整体匹配加权更高）
 const COMPOUND_NEG = [
@@ -2089,7 +2048,12 @@ const COMPOUND_NEG = [
   '克扣工资', '拖欠工资', '强制加班', '变相裁员', '软裁员',
   '裙带关系', '关系户', '第一学历歧视', '性别歧视', '生育歧视',
   '待遇滑坡', '奖金归零', '承诺不兑现', '空头支票', '朝令夕改',
-  '层层加码', '形式主义', '打击报复', '穿小鞋'
+  '层层加码', '形式主义', '打击报复', '穿小鞋',
+  '萝卜招聘', '虚假招聘', '体检争议', '政审争议',
+  '新老员工倒挂', '以偏概全',
+  '密薪制', '高薪垄断', '违规津补贴',
+  '账外收入', '内部文件外流', '员工爆料',
+  '负责人高薪', '三项制度改革', '薪酬优化'
 ];
 
 // ═══════════════════════════════════════════
@@ -2342,12 +2306,14 @@ updateThresholdFill();
 //  配置持久化（localStorage） - 修复版
 // ═══════════════════════════════════════════
 const STORAGE_KEY = 'yuqing_config';
+const LEXICON_VERSION = 'v2'; // 词库版本号，更新词库时递增
 
 function saveConfig() {
   const config = {
     models: models.filter(m => !m.builtin),
     activeModelId: activeModelId,
     apiKeys: {},
+    lexiconVersion: LEXICON_VERSION,
     // 将四个词库的内容也保存下来
     lexicon: {
       entity: $('entityTextarea').value,
@@ -2581,7 +2547,8 @@ function buildNegSet() { return new Set(getLexicon($('negTextarea')).map(w => w.
 // 强实体：指向唯一、单独出现即可确认主体（含「国网/国家电网」或为具名子公司/省公司）
 // 弱实体：泛化、单独出现不足以确认主体，需与领域词邻近共现
 const STRONG_ENTITY_EXTRA = new Set([
-  '南瑞','许继','平高','英大','新源','中电装备','山东电工','南瑞继保'
+  '南瑞','许继','平高','英大','新源','中电装备','山东电工','南瑞继保',
+  '95598','网上国网'
 ].map(w => w.toLowerCase()));
 
 // 用户自定义「强实体豁免词」：填入即强制判为强实体（绕过常规规则）
@@ -2922,13 +2889,18 @@ async function startAnalysis() {
             }
           }
 
+          // 安全截断，防止超出模型上下文限制
+          if (combinedContent.length > 1500) {
+            combinedContent = combinedContent.substring(0, 1500) + '...(已截断)';
+          }
+
           const prompt = buildAIPrompt(combinedContent);
           const key = keys[(keyCursor++) % keys.length];   // 轮询分配 Key
 
           const reply = await callLLM(model, key, prompt, systemP);
           const json = parseAIReply(reply);
 
-          if (json && json.overall_negative === true) {
+          if (json && (json.r === true || json.r === "true" || json.overall_negative === true)) {
             rr.aiConfirmed = true;
             aiMarked++;
             $('statAI').textContent = aiMarked;
@@ -3031,18 +3003,17 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 //  AI Prompt 构建 + 解析
 // ═══════════════════════════════════════════
 function buildAIPrompt(content) {
-  return `请判断以下内容是否包含针对国家电网公司在【招聘过程】（笔试、面试、录用、公平性等）或【薪酬管理】（工资、奖金、绩效、福利等）方面的明确负面评价、投诉或质疑。
+  return `你是国家电网人力资源舆情分析员。判断以下内容是否属于国网人资负面舆情。
 
-判断标准：
-- 存在明显的负面情绪、投诉、曝光、质疑招聘公正性、薪酬不公等内容 → 负面
-- 中性陈述、正面评价、无关内容 → 非负面
-- 不确定时倾向于判断为非负面
+【招聘类】质疑公平性(萝卜招聘/内定/歧视/流程不透明) | 质疑合规性(虚假招聘/违规违约/体检政审争议) | 信息不实(公告错误/岗位不符/承诺夸大) | 不良反馈(面试不公/投诉无门/拖延/毁约) | 政策误解(招录条件/专业限制/学历要求/岗位分配)
 
-待判断内容：
-${content || '（空）'}
+【薪酬类】负责人高薪争议 | 薪酬公平(同工不同酬/差距过大/倒挂) | 不实数据(编造薪资/以偏概全) | 薪酬合规(违规津补贴/少缴社保) | 薪酬争议(降薪/绩效不公/福利缩水/密薪制) | 政策误读(三项制度改革/负责人薪酬) | 内部泄露(爆料薪资/文件外流)
 
-请严格按如下 JSON 格式输出，不输出任何其他文字：
-{"overall_negative":true/false,"reason":"简要说明（20字内）"}`;
+判定：明确负面→负面；中性/正面/无关→非负面；不确定→非负面
+
+内容：${content || '（空）'}
+
+输出JSON：{"r":true/false,"c":"招聘/薪酬/无关","s":"场景","reason":"理由(15字内)"}`;
 }
 
 function parseAIReply(reply) {
@@ -3501,8 +3472,16 @@ initLexicon();
 // 加载保存的配置
 const savedConfig = loadConfig();
 if (savedConfig) {
-  applyConfig(savedConfig);
-  log('已加载保存的配置（模型和API Key）', 'ok');
+  // 词库版本检测：如果默认词库已更新，不恢复旧词库，使用新默认值
+  if (!savedConfig.lexiconVersion || savedConfig.lexiconVersion !== LEXICON_VERSION) {
+    // 仅恢复模型和API Key，不恢复词库
+    const configWithoutLexicon = { ...savedConfig, lexicon: null };
+    applyConfig(configWithoutLexicon);
+    log('检测到词库已更新，已重置为最新默认词库', 'info');
+  } else {
+    applyConfig(savedConfig);
+    log('已加载保存的配置（模型和API Key）', 'ok');
+  }
 }
 
 renderModelList();
