@@ -1067,7 +1067,7 @@ input[type="range"]::-moz-range-progress {
     <div class="main-tab" data-tab="lexicon-reverse">🔮 词库逆向</div>
   </nav>
   <div class="topbar-actions">
-    <button class="btn btn-ghost btn-sm" id="topImportBtn">⬆ 导入文件</button>
+    <button class="btn btn-ghost btn-sm" id="topResetBtn">🔄 一键清除</button>
     <button class="btn btn-primary btn-sm" id="topExportBtn" disabled>⬇ 导出结果</button>
   </div>
 </div>
@@ -2179,6 +2179,7 @@ let currentMode = 'local';
 let isRunning = false;
 let shouldStop = false;
 let resultRows = [];
+let previewTargetCols = null; // 存储当前分析使用的列信息，供 renderPreview 使用
 
 // 模型配置
 let models = [
@@ -2349,7 +2350,84 @@ uploadZone.addEventListener('drop', e => {
   if (f) loadFile(f);
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
-$('topImportBtn').addEventListener('click', () => fileInput.click());
+$('topResetBtn').addEventListener('click', resetAll);
+
+function resetAll() {
+  // 1. 停止正在运行的任务
+  shouldStop = true;
+  isRunning = false;
+
+  // 2. 清除文件状态
+  originalFileName = '';
+  currentSheetName = '';
+  resultRows = [];
+  previewTargetCols = null;
+  window.currentExcelHeaders = [];
+
+  // 3. 清除 Blob 缓存
+  window._exportBlob = null;
+  window._extractBlob = null;
+  window._exportFileName = '';
+  window._extractFileName = '';
+  window._reverseResultRows = null;
+
+  // 4. 重置文件上传区域
+  $('fileInput').value = '';
+  $('fileInfoBlock').style.display = 'none';
+  $('fileInfoName').textContent = '';
+  $('fileInfoMeta').textContent = '';
+  $('sheetSelect').innerHTML = '';
+  $('sheetSelectWrap').style.display = 'none';
+
+  // 5. 重置执行控制
+  $('startBtn').disabled = true;
+  $('stopBtn').style.display = 'none';
+  $('progressWrap').style.display = 'none';
+  $('progressFill').style.width = '0%';
+  $('progressInfo').textContent = '准备中...';
+  $('progressPct').textContent = '0%';
+
+  // 6. 重置统计
+  $('statTotal').textContent = '0';
+  $('statMarked').textContent = '0';
+  $('statAI').textContent = '0';
+  $('statTime').textContent = '-';
+
+  // 7. 重置导出按钮
+  $('topExportBtn').disabled = true;
+
+  // 8. 重置结果预览
+  renderPreview([]);
+
+  // 9. 重置字段映射
+  $('mappingContainer').innerHTML = '<div style="color:var(--text3); font-size:12px; grid-column: 1 / -1;">请先在左侧上传 Excel 文件...</div>';
+  $('addMappingBtn').style.display = 'none';
+
+  // 10. 重置词库逆向结果
+  $('reverseResultWrap').style.display = 'none';
+  $('reverseTableBody').innerHTML = '';
+  $('reverseResultCount').textContent = '';
+
+  // 11. 重置内容解析进度
+  $('extractProgressWrap').style.display = 'none';
+  $('extractProgressFill').style.width = '0%';
+  $('extractProgressInfo').textContent = '';
+  $('extractProgressPct').textContent = '';
+
+  // 12. 清空日志
+  $('logPanel').innerHTML = '';
+
+  // 13. 重置状态栏
+  setStatus('就绪', 'default');
+
+  // 14. 切换到系统首页
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector('.main-tab[data-tab="home"]').classList.add('active');
+  $('tab-home').classList.add('active');
+
+  log('系统已重置，恢复到初始状态', 'ok');
+}
 
 function loadFile(file) {
   if (!file.name.endsWith('.xlsx')) { alert('仅支持 .xlsx 格式文件'); return; }
@@ -2816,6 +2894,7 @@ async function startAnalysis() {
   isRunning = true;
   shouldStop = false;
   resultRows = [];
+  previewTargetCols = null;
 
   // 释放上一次导出的 Blob 缓存，防止内存泄漏
   if (window._exportBlob) {
@@ -2867,6 +2946,7 @@ async function startAnalysis() {
     // 方案 A：用户有自定义选择，严格遵循用户的选择
     log(`检测到自定义字段映射，已覆盖系统默认规则，将扫描指定的 ${customCols.length} 列`, 'info');
     targetCols = customCols.map(idx => ({ colIdx: idx, label: headers[idx] || `列${idx}` }));
+    previewTargetCols = targetCols.map(t => ({ colIdx: t.colIdx, label: t.label }));
   } else {
     // 方案 B：用户未选择，使用经典的默认探测逻辑
     const idxTitle = headers.findIndex(h => h.includes('标题') || h.includes('微博内容'));
@@ -3290,11 +3370,25 @@ function renderPreview(rows) {
   }
   const headers = rows[0].headers;
 
-  // 展示关键列：行号、是否舆情、标题、摘要、命中词、AI确认
+  // 动态确定数据列
   const cols = ['行号'];
-  const titleLabel = headers.find(h => h.includes('标题') || h.includes('微博内容')) || '标题';
-  const absLabel = headers.find(h => h === '摘要') || '摘要';
-  cols.push(titleLabel, absLabel, '命中词（实体/领域/情感）', 'AI 确认');
+  const hasDefaultTitle = headers.some(h => h.includes('标题') || h.includes('微博内容'));
+  const hasDefaultAbs = headers.some(h => h === '摘要');
+
+  if (previewTargetCols && previewTargetCols.length > 0) {
+    // 用户有自定义列选择，优先使用（最多展示前2列）
+    const showCols = previewTargetCols.slice(0, 2);
+    showCols.forEach(c => cols.push(c.label));
+  } else if (hasDefaultTitle || hasDefaultAbs) {
+    // 无自定义，原文件有默认列，保持现有逻辑
+    const titleLabel = headers.find(h => h.includes('标题') || h.includes('微博内容')) || '标题';
+    const absLabel = headers.find(h => h === '摘要') || '摘要';
+    cols.push(titleLabel, absLabel);
+  } else {
+    // 兜底
+    cols.push('标题', '摘要');
+  }
+  cols.push('命中词（实体/领域/情感）', 'AI 确认');
 
   let html = `<div class="preview-wrap"><table class="preview-table"><thead><tr>`;
   cols.forEach(c => { html += `<th>${escHtml(c)}</th>`; });
@@ -3302,8 +3396,27 @@ function renderPreview(rows) {
 
   for (const rr of rows) {
     const row = rr.rowData;
-    const idxTitle = rr.headers.findIndex(h => h.includes('标题') || h.includes('微博内容'));
-    const idxAbs = rr.headers.findIndex(h => h === '摘要');
+
+    // 获取数据列内容
+    let dataCells = [];
+    if (previewTargetCols && previewTargetCols.length > 0) {
+      // 用户有自定义列选择，优先使用
+      const showCols = previewTargetCols.slice(0, 2);
+      dataCells = showCols.map(c => ({
+        idx: c.colIdx,
+        text: String(row[c.colIdx] || '')
+      }));
+    } else if (hasDefaultTitle || hasDefaultAbs) {
+      // 无自定义，使用默认列
+      const idxTitle = rr.headers.findIndex(h => h.includes('标题') || h.includes('微博内容'));
+      const idxAbs = rr.headers.findIndex(h => h === '摘要');
+      dataCells = [
+        { idx: idxTitle, text: String(row[idxTitle] || '') },
+        { idx: idxAbs, text: String(row[idxAbs] || '') }
+      ];
+    }
+
+    // 命中词渲染
     const entityHits = [...new Set(rr.hitCells.flatMap(c => c.entityHits || []))];
     const domainHits = [...new Set(rr.hitCells.flatMap(c => c.domainHits || []))];
     const negHits = [...new Set(rr.hitCells.flatMap(c => c.hitWords || []))];
@@ -3315,13 +3428,15 @@ function renderPreview(rows) {
     if (negHits.length) kwHtml += `<div><span style="font-size:10px;color:var(--text3);">情感</span> ${negHits.map(w => chip(w, '#ef4444')).join('')}</div>`;
     if (!kwHtml) kwHtml = '—';
 
-    html += `<tr class="row-marked">
-      <td>${rr.rowIdx}</td>
-      <td class="hit" title="${escHtml(String(row[idxTitle] || ''))}">${escHtml(String(row[idxTitle] || '').slice(0, 50))}${(row[idxTitle]||'').length > 50 ? '…' : ''}</td>
-      <td class="hit" title="${escHtml(String(row[idxAbs] || ''))}">${escHtml(String(row[idxAbs] || '').slice(0, 50))}${(row[idxAbs]||'').length > 50 ? '…' : ''}</td>
-      <td style="min-width:220px;">${kwHtml}</td>
-      <td class="${rr.aiConfirmed ? 'yq-ai' : ''}">${rr.aiConfirmed ? '✓ 已确认' : '—'}</td>
-    </tr>`;
+    // 渲染行
+    html += `<tr class="row-marked"><td>${rr.rowIdx}</td>`;
+    dataCells.forEach(dc => {
+      const truncated = dc.text.length > 50 ? dc.text.slice(0, 50) + '…' : dc.text;
+      html += `<td class="hit" title="${escHtml(dc.text)}">${escHtml(truncated)}</td>`;
+    });
+    html += `<td style="min-width:220px;">${kwHtml}</td>`;
+    html += `<td class="${rr.aiConfirmed ? 'yq-ai' : ''}">${rr.aiConfirmed ? '✓ 已确认' : '—'}</td>`;
+    html += `</tr>`;
   }
   html += '</tbody></table></div>';
   wrap.innerHTML = html;
