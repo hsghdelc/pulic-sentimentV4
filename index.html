@@ -49,13 +49,20 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  height: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── 顶部导航 ── */
@@ -129,17 +136,27 @@ body {
   flex: 1;
   overflow: hidden;
   height: calc(100vh - 52px);
+  min-height: 0;
 }
 
 /* ── 左侧边栏 ── */
 .sidebar {
   width: 260px;
   flex-shrink: 0;
+  height: calc(100vh - 52px);
+  min-height: 0;
   background: var(--surface);
   border-right: 1px solid var(--border2);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-main {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-section {
@@ -311,6 +328,9 @@ select:focus { border-color: var(--accent); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: calc(100vh - 52px);
+  min-height: 0;
+  min-width: 0;
 }
 
 /* Tab 切换 */
@@ -318,9 +338,10 @@ select:focus { border-color: var(--accent); }
   display: flex;
   gap: 0;
   flex-shrink: 0;
-  overflow-x: auto;
+  overflow: visible;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  min-width: 0;
 }
 
 .main-tabs::-webkit-scrollbar { display: none; }
@@ -343,9 +364,72 @@ select:focus { border-color: var(--accent); }
   font-weight: 600;
 }
 
+.more-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.more-menu-btn {
+  height: 52px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text2);
+  padding: 0 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.more-menu-btn:hover,
+.more-menu-wrap.open .more-menu-btn,
+.more-menu-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.more-menu {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  display: none;
+  z-index: 1000;
+}
+
+.more-menu-wrap.open .more-menu { display: block; }
+
+.more-menu-item {
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.more-menu-item:hover,
+.more-menu-item.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
 .main-content {
   flex: 1;
+  min-height: 0;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
   max-width: 1400px;
   margin: 0 auto;
@@ -784,6 +868,227 @@ input[type="range"]::-moz-range-progress {
   flex-wrap: wrap;
 }
 
+/* 质量验证 */
+.quality-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.quality-layout > * { min-width: 0; }
+
+.quality-result-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.quality-config-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.quality-upload-block {
+  min-width: 0;
+}
+
+.quality-control-block {
+  min-width: 0;
+}
+
+.quality-control-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(220px, 320px);
+  gap: 14px;
+  align-items: start;
+}
+
+.quality-action-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.quality-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.quality-metric {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.quality-metric .metric-label {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.quality-metric .metric-label strong {
+  display: block;
+  color: var(--text2);
+  font-size: 12px;
+}
+
+.quality-metric .metric-label span {
+  display: block;
+  color: var(--text3);
+  font-size: 10px;
+  margin-top: 2px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.quality-metric .metric-value {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.quality-metric .metric-value.good { color: var(--success); }
+.quality-metric .metric-value.warn { color: var(--warn); }
+.quality-metric .metric-value.danger { color: var(--danger); }
+.quality-metric .metric-value.info { color: var(--accent); }
+
+.quality-confusion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.quality-confusion-cell {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.quality-confusion-cell .cell-title {
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 700;
+}
+
+.quality-confusion-cell .cell-num {
+  margin-top: 8px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.quality-confusion-cell.tp .cell-num,
+.quality-confusion-cell.tn .cell-num { color: var(--success); }
+.quality-confusion-cell.fp .cell-num { color: var(--warn); }
+.quality-confusion-cell.fn .cell-num { color: var(--danger); }
+
+.quality-select-list {
+  max-height: 150px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 2px;
+}
+
+.quality-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.quality-check-row:hover { background: var(--surface3); color: var(--text); }
+.quality-check-row input { flex: 0 0 auto; }
+
+.quality-filter {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.quality-filter.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  font-weight: 700;
+}
+
+.quality-detail-wrap {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 460px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+}
+
+.quality-detail-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.quality-detail-table th {
+  background: var(--surface3);
+  color: var(--text2);
+  padding: 8px 10px;
+  font-weight: 600;
+  font-size: 11px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.quality-detail-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border2);
+  color: var(--text);
+  vertical-align: top;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.quality-detail-table tr:hover td { background: var(--surface2); }
+
+.quality-col-row { width: 6%; }
+.quality-col-type { width: 7%; }
+.quality-col-label { width: 7%; }
+.quality-col-hit { width: 22%; }
+.quality-col-ai { width: 8%; }
+.quality-col-diagnosis { width: 22%; }
+.quality-col-text { width: 21%; }
+
+@media (max-width: 1180px) {
+  .quality-config-grid,
+  .quality-control-row { grid-template-columns: 1fr; }
+  .quality-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* 滚动条 */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -870,14 +1175,14 @@ input[type="range"]::-moz-range-progress {
 
 /* ── 左侧边栏底部区域 ── */
 .sidebar-info-card {
-  flex-grow: 1; /* 强制占据下方所有剩余空间 */
-  margin-top: 0;
-  padding: 20px 16px;
+  flex: 0 0 auto;
+  padding: 16px;
   background: var(--surface2);
+  border-top: 1px solid var(--border2);
 
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .info-card-group {
@@ -899,6 +1204,9 @@ input[type="range"]::-moz-range-progress {
   padding: 8px 10px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.02);
+  min-height: 36px;
+  display: flex;
+  align-items: center;
 }
 
 .info-card-url {
@@ -909,8 +1217,15 @@ input[type="range"]::-moz-range-progress {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
   transition: color 0.2s;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-card-url span {
+  flex: 0 0 auto;
 }
 
 .info-card-url:hover {
@@ -1063,8 +1378,14 @@ input[type="range"]::-moz-range-progress {
     <div class="main-tab" data-tab="result">📋 识别结果</div>
     <div class="main-tab" data-tab="log">🗒️ 运行日志</div>
     <div class="main-tab" data-tab="mapping">📑 字段映射</div>
-    <div class="main-tab" data-tab="extract">🔍 内容解析</div>
-    <div class="main-tab" data-tab="lexicon-reverse">🔮 词库逆向</div>
+    <div class="more-menu-wrap" id="moreMenuWrap">
+      <button type="button" class="more-menu-btn" id="moreMenuBtn">更多 ▾</button>
+      <div class="more-menu" id="moreMenu">
+        <div class="more-menu-item" data-tab="extract">🔍 内容解析</div>
+        <div class="more-menu-item" data-tab="lexicon-reverse">🔮 词库逆向</div>
+        <div class="more-menu-item" data-tab="quality">✅ 质量验证</div>
+      </div>
+    </div>
   </nav>
   <div class="topbar-actions">
     <button class="btn btn-ghost btn-sm" id="topResetBtn">🔄 一键清除</button>
@@ -1077,6 +1398,7 @@ input[type="range"]::-moz-range-progress {
 
   <!-- 左侧边栏 -->
   <div class="sidebar">
+    <div class="sidebar-main">
 
     <!-- 文件上传 -->
     <div class="sidebar-section">
@@ -1157,6 +1479,7 @@ input[type="range"]::-moz-range-progress {
           <div class="stat-label">耗时(s)</div>
         </div>
       </div>
+    </div>
     </div>
 
     <div class="sidebar-info-card">
@@ -1344,6 +1667,10 @@ input[type="range"]::-moz-range-progress {
               <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6;">
                 <span style="color:#34d399;">●强实体</span>（含「国网/国家电网」、具名子公司、或≥5字）出现即确认主体；<br>
                 <span style="color:#fbbf24;">●弱实体</span>（其余泛词，如供电局/省电力）须与领域词邻近共现。
+              </div>
+              <div id="entityClassify" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:10px;">
+                <span style="color:#34d399;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:999px;padding:2px 8px;">强 <b id="strongCount">0</b></span>
+                <span style="color:#fbbf24;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:999px;padding:2px 8px;">弱 <b id="weakCount">0</b></span>
               </div>
               <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
                 <div style="font-size:11px;color:#34d399;font-weight:600;margin-bottom:4px;">⭐ 强实体豁免词</div>
@@ -1603,6 +1930,166 @@ input[type="range"]::-moz-range-progress {
                     </tr>
                   </thead>
                   <tbody id="reverseTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: 质量验证 ── -->
+      <div class="tab-pane" id="tab-quality">
+        <div class="quality-layout">
+          <div class="panel">
+            <div class="panel-title">
+              <div class="icon">✅</div>
+              质量验证
+              <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:8px;">用人工真值样本检验识别质量</span>
+            </div>
+
+            <div class="info-box" style="margin-bottom:16px;">
+              上传包含人工标注的业务表，系统读取首行标题后，由您选择分析列和人工真值列。
+            </div>
+
+            <div class="quality-config-grid">
+              <div class="quality-upload-block">
+                <div class="upload-zone" id="qualityUploadZone">
+                  <input type="file" id="qualityFileInput" accept=".xlsx">
+                  <div class="upload-icon">🧪</div>
+                  <div class="upload-text">
+                    <strong>点击上传评测样本</strong> 或拖拽文件至此<br>
+                    支持兼容现有业务表的 .xlsx 文件
+                  </div>
+                </div>
+
+                <div id="qualityFileInfo" style="display:none; margin-top:10px;">
+                  <div class="file-info">
+                    <div class="file-info-name" id="qualityFileName"></div>
+                    <div class="file-info-meta" id="qualityFileMeta"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="quality-control-block" id="qualityConfigArea" style="display:none;">
+                <div class="quality-control-row">
+                  <div>
+                    <div style="font-size:12px; color:var(--text2); margin-bottom:8px;">分析列（可多选）</div>
+                    <div class="quality-select-list" id="qualityAnalysisCols"></div>
+                  </div>
+
+                  <div>
+                    <div style="font-size:12px; color:var(--text2); margin-bottom:8px;">人工真值列</div>
+                    <select id="qualityTruthSelect" style="font-size:13px; padding:8px 12px;">
+                      <option value="">-- 请选择人工真值列 --</option>
+                    </select>
+
+                    <div class="warn-box" style="margin-top:10px;">
+                      真值列支持：是/否、1/0、true/false、负面/非负面。空值会跳过。
+                    </div>
+
+                    <div class="quality-action-row">
+                      <button class="btn btn-primary" id="qualityRunLocalBtn">本地评测</button>
+                      <button class="btn btn-secondary" id="qualityRunAIBtn">AI评测</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="qualityProgressWrap" style="display:none; margin-top:14px;">
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="qualityProgressFill"></div>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                    <span id="qualityProgressInfo" style="font-size:12px; color:var(--text2);">准备评测...</span>
+                    <span id="qualityProgressPct" style="font-size:12px; color:var(--accent);">0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="quality-result-stack">
+            <div class="panel">
+              <div class="panel-title">
+                <div class="icon">📊</div>
+                评测报告
+                <span id="qualityReportMode" style="font-size:11px; color:var(--text3); font-weight:400; margin-left:8px;">等待评测</span>
+              </div>
+
+              <div class="quality-card-grid">
+                <div class="quality-metric">
+                  <div class="metric-label"><strong>样本数</strong><span>Total</span></div>
+                  <div class="metric-value info" id="qualityMetricTotal">0</div>
+                </div>
+                <div class="quality-metric">
+                  <div class="metric-label"><strong>准确率</strong><span>Accuracy</span></div>
+                  <div class="metric-value" id="qualityMetricAccuracy">-</div>
+                </div>
+                <div class="quality-metric">
+                  <div class="metric-label"><strong>精确率</strong><span>Precision</span></div>
+                  <div class="metric-value" id="qualityMetricPrecision">-</div>
+                </div>
+                <div class="quality-metric">
+                  <div class="metric-label"><strong>召回率</strong><span>Recall</span></div>
+                  <div class="metric-value" id="qualityMetricRecall">-</div>
+                </div>
+                <div class="quality-metric">
+                  <div class="metric-label"><strong>综合分</strong><span>F1</span></div>
+                  <div class="metric-value" id="qualityMetricF1">-</div>
+                </div>
+              </div>
+
+              <div class="quality-confusion">
+                <div class="quality-confusion-cell tp">
+                  <div class="cell-title">TP 命中正确</div>
+                  <div class="cell-num" id="qualityTP">0</div>
+                </div>
+                <div class="quality-confusion-cell fp">
+                  <div class="cell-title">FP 误报</div>
+                  <div class="cell-num" id="qualityFP">0</div>
+                </div>
+                <div class="quality-confusion-cell fn">
+                  <div class="cell-title">FN 漏报</div>
+                  <div class="cell-num" id="qualityFN">0</div>
+                </div>
+                <div class="quality-confusion-cell tn">
+                  <div class="cell-title">TN 排除正确</div>
+                  <div class="cell-num" id="qualityTN">0</div>
+                </div>
+              </div>
+
+              <div id="qualityAICompare" class="info-box" style="display:none; margin-top:14px;"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-title">
+                <div class="icon">🔎</div>
+                明细分析
+                <span id="qualityDetailCount" style="font-size:11px; color:var(--text3); font-weight:400; margin-left:8px;">0 条</span>
+              </div>
+              <div class="toolbar" style="margin-bottom:12px;">
+                <button class="quality-filter active" data-quality-filter="all">全部</button>
+                <button class="quality-filter" data-quality-filter="FP">误报 FP</button>
+                <button class="quality-filter" data-quality-filter="FN">漏报 FN</button>
+                <button class="quality-filter" data-quality-filter="TP">命中 TP</button>
+                <button class="quality-filter" data-quality-filter="TN">排除 TN</button>
+              </div>
+              <div class="quality-detail-wrap">
+                <table class="quality-detail-table">
+                  <thead>
+                    <tr>
+                      <th class="quality-col-row">行号</th>
+                      <th class="quality-col-type">类型</th>
+                      <th class="quality-col-label">人工</th>
+                      <th class="quality-col-label">系统</th>
+                      <th class="quality-col-hit">命中词</th>
+                      <th class="quality-col-ai">AI</th>
+                      <th class="quality-col-diagnosis">诊断建议</th>
+                      <th class="quality-col-text">分析文本</th>
+                    </tr>
+                  </thead>
+                  <tbody id="qualityDetailBody">
+                    <tr><td colspan="8" style="text-align:center; color:var(--text3); padding:28px;">请先上传样本并开始评测</td></tr>
+                  </tbody>
                 </table>
               </div>
             </div>
@@ -2312,13 +2799,46 @@ $('resetLexiconBtn').addEventListener('click', () => {
 // ═══════════════════════════════════════════
 //  Tab 切换
 // ═══════════════════════════════════════════
+function switchMainTab(tabName) {
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.more-menu-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+  const directTab = document.querySelector(`.main-tab[data-tab="${tabName}"]`);
+  const moreItem = document.querySelector(`.more-menu-item[data-tab="${tabName}"]`);
+  if (directTab) directTab.classList.add('active');
+  if (moreItem) {
+    moreItem.classList.add('active');
+    $('moreMenuBtn').classList.add('active');
+  } else {
+    $('moreMenuBtn').classList.remove('active');
+  }
+
+  const pane = $('tab-' + tabName);
+  if (pane) pane.classList.add('active');
+  const wrap = $('moreMenuWrap');
+  if (wrap) wrap.classList.remove('open');
+}
+
 document.querySelectorAll('.main-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    $('tab-' + tab.dataset.tab).classList.add('active');
+  tab.addEventListener('click', () => switchMainTab(tab.dataset.tab));
+});
+
+$('moreMenuBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  $('moreMenuWrap').classList.toggle('open');
+});
+
+document.querySelectorAll('.more-menu-item').forEach(item => {
+  item.addEventListener('click', e => {
+    e.stopPropagation();
+    switchMainTab(item.dataset.tab);
   });
+});
+
+document.addEventListener('click', () => {
+  const wrap = $('moreMenuWrap');
+  if (wrap) wrap.classList.remove('open');
 });
 
 // ═══════════════════════════════════════════
@@ -2408,6 +2928,16 @@ function resetAll() {
   $('reverseTableBody').innerHTML = '';
   $('reverseResultCount').textContent = '';
 
+  // 10.1 重置质量验证结果
+  qualityWb = null;
+  qualityRows = [];
+  qualityHeaders = [];
+  qualityFileBaseName = '';
+  if (typeof resetQualityReport === 'function') resetQualityReport();
+  if ($('qualityFileInput')) $('qualityFileInput').value = '';
+  if ($('qualityFileInfo')) $('qualityFileInfo').style.display = 'none';
+  if ($('qualityConfigArea')) $('qualityConfigArea').style.display = 'none';
+
   // 11. 重置内容解析进度
   $('extractProgressWrap').style.display = 'none';
   $('extractProgressFill').style.width = '0%';
@@ -2421,10 +2951,7 @@ function resetAll() {
   setStatus('就绪', 'default');
 
   // 14. 切换到系统首页
-  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelector('.main-tab[data-tab="home"]').classList.add('active');
-  $('tab-home').classList.add('active');
+  switchMainTab('home');
 
   log('系统已重置，恢复到初始状态', 'ok');
 }
@@ -2882,6 +3409,70 @@ function localScore(text, negSet) {
   return { score: Math.min(1.0, score / 2.5), hitWords: [...new Set(hitWords)] };
 }
 
+function getCurrentLocalOptions() {
+  const requireEntity = $('requireEntity').checked;
+  const threshold = parseFloat($('thresholdSlider').value);
+  refreshExemptSet();
+  const entitySet = buildEntitySet();
+  const domainSet = buildDomainSet();
+  const negSet = buildNegSet();
+  const { strong: strongEntities, weak: weakEntities } = classifyEntities(entitySet);
+  const domainList = [...domainSet];
+  const proxEl = $('proximityInput');
+  const proximity = proxEl ? parseInt(proxEl.value, 10) || 0 : 30;
+  return {
+    requireEntity,
+    threshold,
+    entitySet,
+    domainSet,
+    negSet,
+    strongEntities,
+    weakEntities,
+    domainList,
+    proximity
+  };
+}
+
+function analyzeTextLocal(text, options) {
+  const opt = options || getCurrentLocalOptions();
+  const result = {
+    matched: false,
+    score: 0,
+    hitWords: [],
+    entityHits: [],
+    domainHits: [],
+    reason: ''
+  };
+  if (!text) {
+    result.reason = '文本为空';
+    return result;
+  }
+
+  if (opt.requireEntity && !entityGate(text, opt.strongEntities, opt.weakEntities, opt.domainList, opt.proximity)) {
+    result.reason = '未命中实体词';
+    return result;
+  }
+
+  if (!containsDomain(text, opt.domainSet)) {
+    result.reason = '未命中领域词';
+    return result;
+  }
+
+  const { score, hitWords } = localScore(text, opt.negSet);
+  result.score = score;
+  result.hitWords = hitWords;
+  result.entityHits = listWordHits(text, [...opt.strongEntities, ...opt.weakEntities]);
+  result.domainHits = listWordHits(text, opt.domainList);
+
+  if (score >= opt.threshold && hitWords.length > 0) {
+    result.matched = true;
+    result.reason = '命中三层规则';
+  } else {
+    result.reason = '负面强度不足';
+  }
+  return result;
+}
+
 // ═══════════════════════════════════════════
 //  开始识别
 // ═══════════════════════════════════════════
@@ -2911,10 +3502,7 @@ async function startAnalysis() {
   setStatus('识别中...', 'warn');
 
   // 切换到日志tab
-  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelector('.main-tab[data-tab="log"]').classList.add('active');
-  $('tab-log').classList.add('active');
+  switchMainTab('log');
 
   const start = Date.now();
   log('═══════════════════════════════', 'info');
@@ -2966,18 +3554,8 @@ async function startAnalysis() {
     ];
   }
 
-  const requireEntity = $('requireEntity').checked;
-  const threshold = parseFloat($('thresholdSlider').value);
-  refreshExemptSet();
-  const entitySet = buildEntitySet();
-  const domainSet = buildDomainSet();
-  const negSet = buildNegSet();
-
-  // 实体词分层 + 邻近共现距离
-  const { strong: strongEntities, weak: weakEntities } = classifyEntities(entitySet);
-  const domainList = [...domainSet];
-  const proxEl = $('proximityInput');
-  const proximity = proxEl ? parseInt(proxEl.value, 10) || 0 : 30;
+  const localOptions = getCurrentLocalOptions();
+  const { requireEntity, threshold, entitySet, domainSet, negSet, strongEntities, weakEntities, domainList, proximity } = localOptions;
 
   log(`词库规模 → 实体词: ${entitySet.size}（强 ${strongEntities.length} / 弱 ${weakEntities.length}） | 领域词: ${domainSet.size} | 负面词: ${negSet.size}`, 'info');
   log(`阈值: ${threshold.toFixed(2)} | 实体词过滤: ${requireEntity ? '开启' : '关闭'} | 弱实体邻近共现距离: ${proximity > 0 ? proximity + '字' : '关闭'}`, 'info');
@@ -3020,17 +3598,16 @@ async function startAnalysis() {
       const label = target.label;
       if (!text) continue;
 
-      // 实体词门槛：强实体直接放行；弱实体须与领域词邻近共现
-      if (requireEntity && !entityGate(text, strongEntities, weakEntities, domainList, proximity)) continue;
-      // 领域词门槛
-      if (!containsDomain(text, domainSet)) continue;
-
-      const { score, hitWords } = localScore(text, negSet);
-      if (score >= threshold && hitWords.length > 0) {
+      const localHit = analyzeTextLocal(text, localOptions);
+      if (localHit.matched) {
         rowHit = true;
-        const entityHits = listWordHits(text, [...strongEntities, ...weakEntities]);
-        const domainHits = listWordHits(text, domainList);
-        cellHits.push({ colIdx, hitWords, label, entityHits, domainHits });
+        cellHits.push({
+          colIdx,
+          hitWords: localHit.hitWords,
+          label,
+          entityHits: localHit.entityHits,
+          domainHits: localHit.domainHits
+        });
       }
     }
 
@@ -3167,10 +3744,7 @@ async function startAnalysis() {
   log('═══════════════════════════════', 'info');
 
   // 切换到结果tab
-  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelector('.main-tab[data-tab="result"]').classList.add('active');
-  $('tab-result').classList.add('active');
+  switchMainTab('result');
 
   renderPreview(resultRows);
   $('resultCount').textContent = localMarked + ' 条本地标记';
@@ -3446,6 +4020,11 @@ function renderPreview(rows) {
 //  导出
 // ═══════════════════════════════════════════
 function doExport() {
+  if ($('tab-quality') && $('tab-quality').classList.contains('active')) {
+    exportQualityReport();
+    return;
+  }
+
   // 优先导出词库逆向结果
   if (window._reverseResultRows && window._reverseResultRows.length) {
     try {
@@ -3542,6 +4121,484 @@ function addMappingRow() {
 
 // 绑定添加按钮事件
 $('addMappingBtn').addEventListener('click', addMappingRow);
+
+// ═══════════════════════════════════════════
+//  质量验证功能
+// ═══════════════════════════════════════════
+let qualityWb = null;
+let qualityRows = [];
+let qualityHeaders = [];
+let qualityFileBaseName = '';
+let qualityResults = [];
+let qualityCurrentFilter = 'all';
+let qualityLastMetrics = null;
+
+const qualityUploadZone = $('qualityUploadZone');
+const qualityFileInput = $('qualityFileInput');
+
+qualityUploadZone.addEventListener('click', () => qualityFileInput.click());
+qualityUploadZone.addEventListener('dragover', e => { e.preventDefault(); qualityUploadZone.classList.add('drag-over'); });
+qualityUploadZone.addEventListener('dragleave', () => qualityUploadZone.classList.remove('drag-over'));
+qualityUploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  qualityUploadZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) loadQualityFile(f);
+});
+qualityFileInput.addEventListener('change', e => { if (e.target.files[0]) loadQualityFile(e.target.files[0]); });
+
+function loadQualityFile(file) {
+  if (!file.name.endsWith('.xlsx')) { alert('仅支持 .xlsx 格式文件'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      qualityWb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+      const ws = qualityWb.Sheets[qualityWb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (data.length < 2) { alert('样本文件为空或只有标题行'); return; }
+
+      qualityRows = data;
+      qualityHeaders = data[0].map(h => String(h || '').trim());
+      qualityFileBaseName = file.name.replace(/\.xlsx$/i, '');
+      renderQualityColumnSelectors();
+      resetQualityReport();
+
+      $('qualityFileName').textContent = file.name;
+      $('qualityFileMeta').textContent = `${data.length - 1} 行样本 · ${qualityHeaders.length} 列 · 工作表：${qualityWb.SheetNames[0]}`;
+      $('qualityFileInfo').style.display = '';
+      $('qualityConfigArea').style.display = '';
+      log(`质量验证：样本已加载 ${file.name}（${data.length - 1} 行）`, 'ok');
+    } catch (e) {
+      log('质量验证样本解析失败: ' + e.message, 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderQualityColumnSelectors() {
+  const list = $('qualityAnalysisCols');
+  const truth = $('qualityTruthSelect');
+  list.innerHTML = '';
+  truth.innerHTML = '<option value="">-- 请选择人工真值列 --</option>';
+
+  qualityHeaders.forEach((h, idx) => {
+    const title = h || `列 ${idx + 1}`;
+    const lower = title.toLowerCase();
+    const likelyText = /标题|微博内容|摘要|评论|内容|正文|原文|跟帖/.test(title);
+    const likelyTruth = /人工|真值|label|是否舆情|舆情标记|标注|结果/.test(lower);
+
+    const label = document.createElement('label');
+    label.className = 'quality-check-row';
+    label.innerHTML = `
+      <input type="checkbox" class="quality-analysis-check" value="${idx}" ${likelyText ? 'checked' : ''}>
+      <span>${escHtml(title)}</span>
+    `;
+    list.appendChild(label);
+
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = title;
+    if (likelyTruth && !truth.value) opt.selected = true;
+    truth.appendChild(opt);
+  });
+}
+
+function parseTruthValue(value) {
+  const raw = String(value == null ? '' : value).trim();
+  if (!raw) return null;
+  const v = raw.toLowerCase();
+  if (['0', 'false', '否', '不是', '非', '非负面', '无', '正常', '正面', '中性', 'no', 'n'].includes(v)) return false;
+  if (['1', 'true', '是', '负面', '舆情', 'yes', 'y'].includes(v)) return true;
+  if (/非负面|不是|无需|无关|正面|中性/.test(raw)) return false;
+  if (/负面|舆情|风险|是/.test(raw)) return true;
+  return null;
+}
+
+function getQualitySelectedColumns() {
+  return [...document.querySelectorAll('.quality-analysis-check:checked')].map(ch => parseInt(ch.value, 10));
+}
+
+function buildQualityContent(row, selectedCols) {
+  return selectedCols
+    .map(idx => {
+      const text = String(row[idx] || '').trim();
+      if (!text) return '';
+      return `【${qualityHeaders[idx] || '列' + (idx + 1)}】${text}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+function getQualityLocalPrediction(row, selectedCols, options) {
+  const hitCells = [];
+  const rawText = [];
+
+  for (const colIdx of selectedCols) {
+    const text = String(row[colIdx] || '').trim();
+    if (!text) continue;
+    rawText.push(text);
+    const hit = analyzeTextLocal(text, options);
+    if (hit.matched) {
+      hitCells.push({
+        colIdx,
+        label: qualityHeaders[colIdx] || `列${colIdx + 1}`,
+        hitWords: hit.hitWords,
+        entityHits: hit.entityHits,
+        domainHits: hit.domainHits
+      });
+    }
+  }
+
+  const joined = rawText.join('\n');
+  return {
+    predicted: hitCells.length > 0,
+    hitCells,
+    entityHits: [...new Set(hitCells.flatMap(c => c.entityHits || []))],
+    domainHits: [...new Set(hitCells.flatMap(c => c.domainHits || []))],
+    negHits: [...new Set(hitCells.flatMap(c => c.hitWords || []))],
+    text: joined
+  };
+}
+
+function classifyQualityType(predicted, actual) {
+  if (predicted && actual) return 'TP';
+  if (predicted && !actual) return 'FP';
+  if (!predicted && actual) return 'FN';
+  return 'TN';
+}
+
+function calcQualityMetrics(rows) {
+  const m = { total: rows.length, TP: 0, FP: 0, FN: 0, TN: 0 };
+  for (const r of rows) m[r.type]++;
+  m.accuracy = m.total ? (m.TP + m.TN) / m.total : 0;
+  m.precision = (m.TP + m.FP) ? m.TP / (m.TP + m.FP) : 0;
+  m.recall = (m.TP + m.FN) ? m.TP / (m.TP + m.FN) : 0;
+  m.f1 = (m.precision + m.recall) ? 2 * m.precision * m.recall / (m.precision + m.recall) : 0;
+  return m;
+}
+
+function pctText(n) {
+  return Number.isFinite(n) ? (n * 100).toFixed(1) + '%' : '-';
+}
+
+function metricTone(value) {
+  if (value >= 0.85) return 'good';
+  if (value >= 0.65) return 'warn';
+  return 'danger';
+}
+
+function renderQualityMetrics(metrics, modeText) {
+  qualityLastMetrics = metrics;
+  $('qualityReportMode').textContent = modeText || '本地规则评测';
+  $('qualityMetricTotal').textContent = metrics.total;
+  $('qualityMetricAccuracy').textContent = pctText(metrics.accuracy);
+  $('qualityMetricPrecision').textContent = pctText(metrics.precision);
+  $('qualityMetricRecall').textContent = pctText(metrics.recall);
+  $('qualityMetricF1').textContent = pctText(metrics.f1);
+  $('qualityMetricAccuracy').className = 'metric-value ' + metricTone(metrics.accuracy);
+  $('qualityMetricPrecision').className = 'metric-value ' + metricTone(metrics.precision);
+  $('qualityMetricRecall').className = 'metric-value ' + metricTone(metrics.recall);
+  $('qualityMetricF1').className = 'metric-value ' + metricTone(metrics.f1);
+  $('qualityTP').textContent = metrics.TP;
+  $('qualityFP').textContent = metrics.FP;
+  $('qualityFN').textContent = metrics.FN;
+  $('qualityTN').textContent = metrics.TN;
+}
+
+function diagnoseQualityRow(row, options) {
+  if (row.type === 'TP') return '命中正确，可作为正例样本保留';
+  if (row.type === 'TN') return '排除正确，可作为负例样本保留';
+  if (row.type === 'FP') {
+    if (row.aiDecision === '否决') return 'AI已否决本地误报，可检查是否采用AI确认口径';
+    if (row.domainHits.length && !row.negHits.length) return '领域词命中但负面词不足，检查阈值或负面词权重';
+    return '可能词库过宽或阈值偏低，建议复核命中词';
+  }
+  const lowerText = (row.text || '').toLowerCase();
+  const entityProbe = listWordHits(lowerText, [...options.strongEntities, ...options.weakEntities]);
+  const domainProbe = listWordHits(lowerText, options.domainList);
+  const negProbe = listWordHits(lowerText, [...options.negSet]);
+  if (!entityProbe.length) return '漏报原因倾向：未命中实体词，建议补充主体简称或调整强弱实体规则';
+  if (!domainProbe.length) return '漏报原因倾向：未命中领域词，建议补充招聘/薪酬相关词';
+  if (!negProbe.length) return '漏报原因倾向：未命中负面情感词，建议补充负面词库';
+  if (row.aiDecision === '否决') return 'AI否决了人工负面样本，建议复核Prompt口径';
+  return '已命中部分词但未达阈值，建议复核阈值和复合短语';
+}
+
+function resetQualityReport() {
+  qualityResults = [];
+  qualityLastMetrics = null;
+  $('qualityAICompare').style.display = 'none';
+  $('qualityAICompare').innerHTML = '';
+  renderQualityMetrics({ total: 0, TP: 0, FP: 0, FN: 0, TN: 0, accuracy: 0, precision: 0, recall: 0, f1: 0 }, '等待评测');
+  $('qualityDetailCount').textContent = '0 条';
+  $('qualityDetailBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text3); padding:28px;">请先上传样本并开始评测</td></tr>';
+}
+
+function renderQualityDetails() {
+  const tbody = $('qualityDetailBody');
+  const rows = qualityCurrentFilter === 'all' ? qualityResults : qualityResults.filter(r => r.type === qualityCurrentFilter);
+  $('qualityDetailCount').textContent = `${rows.length} 条`;
+  tbody.innerHTML = '';
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text3); padding:28px;">暂无明细</td></tr>';
+    return;
+  }
+
+  const typeClass = { TP: 'badge-success', TN: 'badge-success', FP: 'badge-warn', FN: 'badge-danger' };
+  const compactWords = words => {
+    const text = (words || []).slice(0, 4).join('、');
+    return text || '-';
+  };
+  const hitHtml = row => {
+    const parts = [];
+    if (row.entityHits.length) parts.push(`<div><span style="color:#60a5fa;">实体</span> ${escHtml(compactWords(row.entityHits))}</div>`);
+    if (row.domainHits.length) parts.push(`<div><span style="color:#a78bfa;">领域</span> ${escHtml(compactWords(row.domainHits))}</div>`);
+    if (row.negHits.length) parts.push(`<div><span style="color:#ef4444;">情感</span> ${escHtml(compactWords(row.negHits))}</div>`);
+    return parts.join('') || '-';
+  };
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    const predText = row.predicted ? '负面' : '非负面';
+    const actualText = row.actual ? '负面' : '非负面';
+    const shortText = row.text.length > 120 ? row.text.slice(0, 120) + '…' : row.text;
+    tr.innerHTML = `
+      <td>${row.rowNum}</td>
+      <td><span class="badge ${typeClass[row.type]}">${row.type}</span></td>
+      <td>${actualText}</td>
+      <td>${predText}</td>
+      <td title="${escHtml([...(row.entityHits || []), ...(row.domainHits || []), ...(row.negHits || [])].join('、'))}">${hitHtml(row)}</td>
+      <td>${escHtml(row.aiDecision || '-')}</td>
+      <td title="${escHtml(row.diagnosis)}">${escHtml(row.diagnosis)}</td>
+      <td title="${escHtml(row.text)}">${escHtml(shortText || '-')}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function prepareQualityRun() {
+  if (!qualityRows.length) { alert('请先上传评测样本'); return null; }
+  const selectedCols = getQualitySelectedColumns();
+  const truthIdx = parseInt($('qualityTruthSelect').value, 10);
+  if (!selectedCols.length) { alert('请至少选择一个分析列'); return null; }
+  if (!Number.isFinite(truthIdx)) { alert('请选择人工真值列'); return null; }
+  if (selectedCols.includes(truthIdx)) { alert('分析列不能包含人工真值列，请取消勾选该列'); return null; }
+
+  const options = getCurrentLocalOptions();
+  const rows = [];
+  for (let i = 1; i < qualityRows.length; i++) {
+    const actual = parseTruthValue(qualityRows[i][truthIdx]);
+    if (actual === null) continue;
+    const local = getQualityLocalPrediction(qualityRows[i], selectedCols, options);
+    rows.push({
+      rowIdx: i,
+      rowNum: i + 1,
+      actual,
+      localPredicted: local.predicted,
+      predicted: local.predicted,
+      type: classifyQualityType(local.predicted, actual),
+      hitCells: local.hitCells,
+      entityHits: local.entityHits,
+      domainHits: local.domainHits,
+      negHits: local.negHits,
+      aiDecision: '',
+      aiReason: '',
+      text: buildQualityContent(qualityRows[i], selectedCols) || local.text
+    });
+  }
+
+  if (!rows.length) { alert('人工真值列中没有可识别的有效标注'); return null; }
+  return { rows, options, selectedCols, truthIdx };
+}
+
+function setQualityProgress(message, pct) {
+  $('qualityProgressWrap').style.display = '';
+  $('qualityProgressInfo').textContent = message;
+  $('qualityProgressPct').textContent = pct + '%';
+  $('qualityProgressFill').style.width = pct + '%';
+}
+
+async function runQualityLocal() {
+  const prepared = prepareQualityRun();
+  if (!prepared) return;
+  setQualityProgress('正在执行本地评测...', 20);
+  await sleep(0);
+
+  qualityResults = prepared.rows.map(row => {
+    row.type = classifyQualityType(row.predicted, row.actual);
+    row.diagnosis = diagnoseQualityRow(row, prepared.options);
+    return row;
+  });
+  const metrics = calcQualityMetrics(qualityResults);
+  renderQualityMetrics(metrics, '本地规则评测');
+  $('qualityAICompare').style.display = 'none';
+  qualityCurrentFilter = 'all';
+  document.querySelectorAll('.quality-filter').forEach(b => b.classList.toggle('active', b.dataset.qualityFilter === 'all'));
+  renderQualityDetails();
+  $('topExportBtn').disabled = false;
+  setQualityProgress('本地评测完成', 100);
+  setTimeout(() => { $('qualityProgressWrap').style.display = 'none'; }, 500);
+  log(`质量验证：本地评测完成，样本 ${metrics.total} 条，F1 ${pctText(metrics.f1)}`, 'ok');
+}
+
+async function runQualityAI() {
+  const prepared = prepareQualityRun();
+  if (!prepared) return;
+
+  const primaryKey = $('apiKeyInput').value.trim();
+  const extraKeys = ($('extraKeysInput') ? $('extraKeysInput').value : '')
+    .split('\n').map(s => s.trim()).filter(Boolean);
+  const keys = [...new Set([primaryKey, ...extraKeys].filter(Boolean))];
+  const model = models.find(m => m.id === activeModelId);
+  let concurrency = parseInt(($('concurrencyInput') || {}).value, 10);
+  if (!Number.isFinite(concurrency) || concurrency < 1) concurrency = 8;
+  concurrency = Math.min(32, concurrency);
+
+  if (!keys.length || !model) {
+    alert('请先在「识别配置」中配置 API Key 和模型');
+    return;
+  }
+
+  const localMetrics = calcQualityMetrics(prepared.rows);
+  const aiTargets = prepared.rows.filter(r => r.localPredicted);
+  let done = 0;
+  let nextIdx = 0;
+  let keyCursor = 0;
+  const systemP = `你是一名专业的企业舆情分析员，专门识别与国家电网公司招聘和薪酬管理相关的负面信息。\n只输出 JSON，不要输出任何其他内容。`;
+
+  setQualityProgress(`AI评测准备中：本地命中 ${aiTargets.length} 条`, 10);
+  log(`质量验证：AI评测开始 → 总样本 ${prepared.rows.length} | 送检 ${aiTargets.length} | 并发 ${concurrency}`, 'info');
+
+  async function verifyOne(i) {
+    const row = aiTargets[i];
+    try {
+      let content = row.text || '';
+      if (content.length > 1500) content = content.substring(0, 1500) + '...(已截断)';
+      const reply = await callLLM(model, keys[(keyCursor++) % keys.length], buildAIPrompt(content), systemP);
+      const json = parseAIReply(reply);
+      const confirmed = !!(json && (json.r === true || json.r === 'true' || json.overall_negative === true));
+      row.predicted = confirmed;
+      row.aiDecision = confirmed ? '确认' : '否决';
+      row.aiReason = json?.reason || json?.s || '';
+    } catch (e) {
+      row.predicted = row.localPredicted;
+      row.aiDecision = '失败保留';
+      row.aiReason = e.message;
+      log(`质量验证：AI评测行${row.rowNum}失败，保留本地结果：${e.message}`, 'warn');
+    } finally {
+      done++;
+      const pct = 15 + Math.round((done / Math.max(aiTargets.length, 1)) * 80);
+      setQualityProgress(`AI 核验 ${done} / ${aiTargets.length}`, Math.min(95, pct));
+    }
+  }
+
+  async function worker() {
+    while (true) {
+      const i = nextIdx++;
+      if (i >= aiTargets.length) return;
+      await verifyOne(i);
+    }
+  }
+
+  if (aiTargets.length) {
+    const workers = [];
+    for (let i = 0; i < Math.min(concurrency, aiTargets.length); i++) workers.push(worker());
+    await Promise.all(workers);
+  }
+
+  qualityResults = prepared.rows.map(row => {
+    if (!row.localPredicted) row.aiDecision = '未送检';
+    row.type = classifyQualityType(row.predicted, row.actual);
+    row.diagnosis = diagnoseQualityRow(row, prepared.options);
+    return row;
+  });
+
+  const aiMetrics = calcQualityMetrics(qualityResults);
+  const correctedFP = qualityResults.filter(r => r.localPredicted && !r.actual && !r.predicted).length;
+  const killedTP = qualityResults.filter(r => r.localPredicted && r.actual && !r.predicted).length;
+  renderQualityMetrics(aiMetrics, 'AI确认口径评测');
+  $('qualityAICompare').style.display = '';
+  $('qualityAICompare').innerHTML = `
+    <strong>本地预筛对比：</strong>
+    本地 F1 ${pctText(localMetrics.f1)} → AI确认 F1 ${pctText(aiMetrics.f1)}；
+    AI纠正误报 ${correctedFP} 条，AI错杀负面 ${killedTP} 条。
+  `;
+  qualityCurrentFilter = 'all';
+  document.querySelectorAll('.quality-filter').forEach(b => b.classList.toggle('active', b.dataset.qualityFilter === 'all'));
+  renderQualityDetails();
+  $('topExportBtn').disabled = false;
+  setQualityProgress('AI评测完成', 100);
+  setTimeout(() => { $('qualityProgressWrap').style.display = 'none'; }, 500);
+  log(`质量验证：AI评测完成，样本 ${aiMetrics.total} 条，F1 ${pctText(aiMetrics.f1)}`, 'ok');
+}
+
+function exportQualityReport() {
+  if (!qualityResults.length || !qualityLastMetrics) { alert('请先完成评测'); return; }
+  try {
+    const wbOut = XLSX.utils.book_new();
+    const metrics = qualityLastMetrics;
+    const summary = [
+      ['指标', '数值'],
+      ['样本数', metrics.total],
+      ['TP 命中正确', metrics.TP],
+      ['FP 误报', metrics.FP],
+      ['FN 漏报', metrics.FN],
+      ['TN 排除正确', metrics.TN],
+      ['准确率 Accuracy', pctText(metrics.accuracy)],
+      ['精确率 Precision', pctText(metrics.precision)],
+      ['召回率 Recall', pctText(metrics.recall)],
+      ['综合分 F1', pctText(metrics.f1)],
+      ['阈值', $('thresholdSlider').value],
+      ['实体词数量', buildEntitySet().size],
+      ['领域词数量', buildDomainSet().size],
+      ['负面词数量', buildNegSet().size],
+      ['评测模式', $('qualityReportMode').textContent]
+    ];
+    XLSX.utils.book_append_sheet(wbOut, XLSX.utils.aoa_to_sheet(summary), '总体指标');
+
+    const detailHeader = ['行号', '类型', '人工真值', '系统判定', '命中实体', '命中领域', '命中情感', 'AI状态', 'AI理由', '诊断建议', '分析文本'];
+    const toAoa = rows => [detailHeader, ...rows.map(r => [
+      r.rowNum,
+      r.type,
+      r.actual ? '负面' : '非负面',
+      r.predicted ? '负面' : '非负面',
+      r.entityHits.join('、'),
+      r.domainHits.join('、'),
+      r.negHits.join('、'),
+      r.aiDecision || '',
+      r.aiReason || '',
+      r.diagnosis || '',
+      r.text || ''
+    ])];
+    XLSX.utils.book_append_sheet(wbOut, XLSX.utils.aoa_to_sheet(toAoa(qualityResults.filter(r => r.type === 'FP' || r.type === 'FN'))), '误判明细');
+    XLSX.utils.book_append_sheet(wbOut, XLSX.utils.aoa_to_sheet(toAoa(qualityResults)), '全量结果');
+
+    const wbuf = XLSX.write(wbOut, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().slice(0, 16).replace(/[-T:]/g, '');
+    a.href = url;
+    a.download = `质量验证报告-${qualityFileBaseName || '样本'}-${ts}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    log('质量验证报告已导出', 'ok');
+  } catch (e) {
+    log('质量验证报告导出失败: ' + e.message, 'err');
+  }
+}
+
+$('qualityRunLocalBtn').addEventListener('click', runQualityLocal);
+$('qualityRunAIBtn').addEventListener('click', runQualityAI);
+
+document.querySelectorAll('.quality-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    qualityCurrentFilter = btn.dataset.qualityFilter;
+    document.querySelectorAll('.quality-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderQualityDetails();
+  });
+});
 
 // ═══════════════════════════════════════════
 //  内容解析功能
