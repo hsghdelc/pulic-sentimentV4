@@ -668,6 +668,23 @@ input[type="range"]::-moz-range-progress {
 
 /* 词库面板 */
 .lexicon-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: stretch; }
+.lexicon-stack { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.lexicon-stack .lexicon-card { min-height: 0; padding: 12px; overflow: hidden; }
+.lexicon-stack .lexicon-card-context { flex: 0.65 1 0; }
+.lexicon-stack .lexicon-card-domain { flex: 1.35 1 0; }
+.lexicon-stack .lexicon-card-head { margin-bottom: 8px; }
+.lexicon-stack .lexicon-card > div:last-child {
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+  margin-top: 5px !important;
+  overflow-wrap: anywhere;
+}
+.lexicon-textarea-compact {
+  height: 82px;
+  min-height: 82px;
+  flex: 0 0 82px;
+  resize: vertical;
+}
 
 .lexicon-card {
   background: var(--surface2);
@@ -716,6 +733,13 @@ input[type="range"]::-moz-range-progress {
 }
 
 .lexicon-textarea:focus { border-color: var(--accent); }
+
+.lexicon-stack .lexicon-textarea-compact {
+  height: 82px;
+  min-height: 82px;
+  flex: 0 0 82px;
+  resize: vertical;
+}
 
 /* ── 实体词库强弱高亮（textarea + 彩色背板叠加）── */
 .lexicon-hl-wrap { position: relative; width: 100%; height: 180px; }
@@ -1682,13 +1706,25 @@ input[type="range"]::-moz-range-progress {
                   style="height:80px;min-height:80px;flex:0 0 auto;" placeholder="例如：&#10;冀电&#10;蒙东"></textarea>
               </div>
             </div>
-            <div class="lexicon-card">
-              <div class="lexicon-card-head">
-                <div class="lexicon-card-title domain">🏷 领域词库</div>
-                <div class="lexicon-count" id="domainCount">0 词</div>
+            <div class="lexicon-stack">
+              <div class="lexicon-card lexicon-card-context">
+                <div class="lexicon-card-head">
+                  <div class="lexicon-card-title entity">🔗 上下文泛主体词</div>
+                  <div class="lexicon-count" id="contextSubjectCount">0 词</div>
+                </div>
+                <textarea class="lexicon-textarea lexicon-textarea-compact" id="contextSubjectTextarea" spellcheck="false"></textarea>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6;">
+                  不能单独触发实体命中；同一条记录中已出现明确国网主体时，才作为承接主体参与判断。
+                </div>
               </div>
-              <textarea class="lexicon-textarea" id="domainTextarea"></textarea>
-              <div style="font-size:11px;color:var(--text3);margin-top:6px;">招聘·薪酬·劳动关系词</div>
+              <div class="lexicon-card lexicon-card-domain">
+                <div class="lexicon-card-head">
+                  <div class="lexicon-card-title domain">🏷 领域词库</div>
+                  <div class="lexicon-count" id="domainCount">0 词</div>
+                </div>
+                <textarea class="lexicon-textarea" id="domainTextarea"></textarea>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px;">招聘·薪酬·劳动关系词</div>
+              </div>
             </div>
             <div class="lexicon-card">
               <div class="lexicon-card-head">
@@ -2243,9 +2279,8 @@ const DEFAULT_ENTITIES = `国家电网
 供电服务公司
 张智刚
 张文峰
-国企
 电网
-央企
+电力行业
 电力系统
 市局
 县局
@@ -2267,6 +2302,11 @@ const DEFAULT_ENTITIES = `国家电网
 国网陕西省电力公司
 三峡电力学院
 南工程`;
+
+const DEFAULT_CONTEXT_SUBJECTS = `国企
+央企
+体制内
+垄断行业`;
 
 const DEFAULT_DOMAIN = `工资
 发钱
@@ -2959,6 +2999,7 @@ function updateLexiconCounts() {
   refreshExemptSet();
   const entities = getLexicon($('entityTextarea'));
   $('entityCount').textContent = entities.length + ' 词';
+  $('contextSubjectCount').textContent = getLexicon($('contextSubjectTextarea')).length + ' 词';
   $('domainCount').textContent = getLexicon($('domainTextarea')).length + ' 词';
   $('negCount').textContent = getLexicon($('negTextarea')).length + ' 词';
   // 实体强弱分类预览
@@ -2978,13 +3019,14 @@ function updateLexiconCounts() {
 // ═══════════════════════════════════════════
 function initLexicon() {
   $('entityTextarea').value = DEFAULT_ENTITIES;
+  $('contextSubjectTextarea').value = DEFAULT_CONTEXT_SUBJECTS;
   $('domainTextarea').value = DEFAULT_DOMAIN;
   $('negTextarea').value = DEFAULT_NEG;
   $('exemptTextarea').value = '';
   updateLexiconCounts();
 }
 
-['entityTextarea', 'domainTextarea', 'negTextarea', 'exemptTextarea'].forEach(id => {
+['entityTextarea', 'contextSubjectTextarea', 'domainTextarea', 'negTextarea', 'exemptTextarea'].forEach(id => {
   $(id).addEventListener('input', updateLexiconCounts);
 });
 // 实体词库滚动时同步背板
@@ -3002,9 +3044,9 @@ $('confirmLexiconBtn').addEventListener('click', () => {
   for (const e of entities) { if (isStrongEntity(e)) strong++; }
   const fb = $('lexiconFeedback');
   const exemptN = userExemptSet.size;
-  fb.textContent = `✓ 词库已更新（实体 ${entities.length}：强 ${strong} / 弱 ${entities.length - strong}${exemptN ? '，含豁免 ' + exemptN + ' 词' : ''}，领域 ${getLexicon($('domainTextarea')).length}，情感 ${getLexicon($('negTextarea')).length}）`;
+  fb.textContent = `✓ 词库已更新（实体 ${entities.length}：强 ${strong} / 弱 ${entities.length - strong}${exemptN ? '，含豁免 ' + exemptN + ' 词' : ''}，泛主体 ${getLexicon($('contextSubjectTextarea')).length}，领域 ${getLexicon($('domainTextarea')).length}，情感 ${getLexicon($('negTextarea')).length}）`;
   fb.style.display = '';
-  log(`词库已确认更新 → 实体 ${entities.length}（强 ${strong}/弱 ${entities.length - strong}，豁免 ${exemptN}） | 领域 ${getLexicon($('domainTextarea')).length} | 情感 ${getLexicon($('negTextarea')).length}`, 'ok');
+  log(`词库已确认更新 → 实体 ${entities.length}（强 ${strong}/弱 ${entities.length - strong}，豁免 ${exemptN}） | 泛主体 ${getLexicon($('contextSubjectTextarea')).length} | 领域 ${getLexicon($('domainTextarea')).length} | 情感 ${getLexicon($('negTextarea')).length}`, 'ok');
   clearTimeout(window._lexFbTimer);
   window._lexFbTimer = setTimeout(() => { fb.style.display = 'none'; }, 4000);
 });
@@ -3248,7 +3290,7 @@ updateThresholdFill();
 //  配置持久化（localStorage） - 修复版
 // ═══════════════════════════════════════════
 const STORAGE_KEY = 'yuqing_config';
-const LEXICON_VERSION = 'v3'; // 词库版本号，更新词库时递增
+const LEXICON_VERSION = 'v5'; // 词库版本号，更新词库时递增
 
 function saveConfig() {
   const config = {
@@ -3259,6 +3301,7 @@ function saveConfig() {
     // 将四个词库的内容也保存下来
     lexicon: {
       entity: $('entityTextarea').value,
+      contextSubject: $('contextSubjectTextarea').value,
       domain: $('domainTextarea').value,
       neg: $('negTextarea').value,
       exempt: $('exemptTextarea').value
@@ -3323,6 +3366,7 @@ function applyConfig(config) {
   // 恢复词库数据
   if (config.lexicon) {
     if (config.lexicon.entity !== undefined) $('entityTextarea').value = config.lexicon.entity;
+    if (config.lexicon.contextSubject !== undefined) $('contextSubjectTextarea').value = config.lexicon.contextSubject;
     if (config.lexicon.domain !== undefined) $('domainTextarea').value = config.lexicon.domain;
     if (config.lexicon.neg !== undefined) $('negTextarea').value = config.lexicon.neg;
     if (config.lexicon.exempt !== undefined) $('exemptTextarea').value = config.lexicon.exempt;
@@ -3483,6 +3527,7 @@ function backoffMs(attempt) {
 //  本地评分核心
 // ═══════════════════════════════════════════
 function buildEntitySet() { return new Set(getLexicon($('entityTextarea')).map(w => w.toLowerCase())); }
+function buildContextSubjectSet() { return new Set(getLexicon($('contextSubjectTextarea')).map(w => w.toLowerCase())); }
 function buildDomainSet() { return new Set(getLexicon($('domainTextarea')).map(w => w.toLowerCase())); }
 function buildNegSet() { return new Set(getLexicon($('negTextarea')).map(w => w.toLowerCase())); }
 
@@ -3513,6 +3558,29 @@ function classifyEntities(entitySet) {
   const strong = [], weak = [];
   for (const e of entitySet) { (isStrongEntity(e) ? strong : weak).push(e); }
   return { strong, weak };
+}
+
+function isExplicitSgccSubjectWord(word) {
+  const w = String(word || '').toLowerCase();
+  if (!w) return false;
+  if (w.includes('国网') || w.includes('国家电网')) return true;
+  if (STRONG_ENTITY_EXTRA.has(w)) return true;
+  return [
+    '供电公司', '供电局', '供电所', '电网公司', '电业局',
+    '95598', '网上国网'
+  ].some(key => w.includes(key.toLowerCase()));
+}
+
+function hasExplicitSgccSubject(text, entityList = []) {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  for (const key of ['国家电网', '国网', '供电公司', '供电局', '供电所', '电网公司', '电业局', '95598', '网上国网']) {
+    if (lower.includes(key.toLowerCase())) return true;
+  }
+  for (const e of entityList) {
+    if (isExplicitSgccSubjectWord(e) && lower.includes(e)) return true;
+  }
+  return false;
 }
 
 function containsDomain(text, domainSet) {
@@ -3547,18 +3615,21 @@ function findOccurrences(lower, word) {
 //  - 强实体在文中任意位置出现 → 通过（主体明确）
 //  - 否则弱实体须与领域词「邻近共现」（间隔 ≤ proximity 字）→ 通过
 //  proximity<=0 表示关闭邻近约束，退化为「弱实体只要出现即可」
-function entityGate(text, strongList, weakList, domainList, proximity) {
+function entityGate(text, strongList, weakList, contextSubjectList, domainList, proximity, rowContextText) {
   if (!text) return false;
   const lower = text.toLowerCase();
+  const hasSgccContext = hasExplicitSgccSubject(rowContextText || text, [...strongList, ...weakList]);
 
   // 1. 强实体直接放行
   for (const e of strongList) { if (lower.includes(e)) return true; }
 
-  if (!weakList.length) return false;
+  const eligibleContextSubjects = hasSgccContext ? contextSubjectList : [];
+  const weakCandidates = [...weakList, ...eligibleContextSubjects];
+  if (!weakCandidates.length) return false;
 
   // 2. 弱实体：无邻近约束时，出现即可
   if (proximity <= 0) {
-    for (const e of weakList) { if (lower.includes(e)) return true; }
+    for (const e of weakCandidates) { if (lower.includes(e)) return true; }
     return false;
   }
 
@@ -3569,7 +3640,7 @@ function entityGate(text, strongList, weakList, domainList, proximity) {
   }
   if (!domainPos.length) return false;
 
-  for (const e of weakList) {
+  for (const e of weakCandidates) {
     for (const [es, ee] of findOccurrences(lower, e)) {
       for (const [ds, de] of domainPos) {
         // 两区间最近边距
@@ -3638,9 +3709,11 @@ function getCurrentLocalOptions() {
   const threshold = parseFloat($('thresholdSlider').value);
   refreshExemptSet();
   const entitySet = buildEntitySet();
+  const contextSubjectSet = buildContextSubjectSet();
   const domainSet = buildDomainSet();
   const negSet = buildNegSet();
   const { strong: strongEntities, weak: weakEntities } = classifyEntities(entitySet);
+  const contextSubjectList = [...contextSubjectSet];
   const domainList = [...domainSet];
   const proxEl = $('proximityInput');
   const proximity = proxEl ? parseInt(proxEl.value, 10) || 0 : 30;
@@ -3648,16 +3721,18 @@ function getCurrentLocalOptions() {
     requireEntity,
     threshold,
     entitySet,
+    contextSubjectSet,
     domainSet,
     negSet,
     strongEntities,
     weakEntities,
+    contextSubjectList,
     domainList,
     proximity
   };
 }
 
-function analyzeTextLocal(text, options) {
+function analyzeTextLocal(text, options, rowContextText) {
   const opt = options || getCurrentLocalOptions();
   const result = {
     matched: false,
@@ -3672,7 +3747,10 @@ function analyzeTextLocal(text, options) {
     return result;
   }
 
-  if (opt.requireEntity && !entityGate(text, opt.strongEntities, opt.weakEntities, opt.domainList, opt.proximity)) {
+  const contextText = rowContextText || text;
+  const hasSgccContext = hasExplicitSgccSubject(contextText, [...opt.strongEntities, ...opt.weakEntities]);
+
+  if (opt.requireEntity && !entityGate(text, opt.strongEntities, opt.weakEntities, opt.contextSubjectList, opt.domainList, opt.proximity, contextText)) {
     result.reason = '未命中实体词';
     return result;
   }
@@ -3685,7 +3763,11 @@ function analyzeTextLocal(text, options) {
   const { score, hitWords } = localScore(text, opt.negSet);
   result.score = score;
   result.hitWords = hitWords;
-  result.entityHits = listWordHits(text, [...opt.strongEntities, ...opt.weakEntities]);
+  result.entityHits = listWordHits(text, [
+    ...opt.strongEntities,
+    ...opt.weakEntities,
+    ...(hasSgccContext ? opt.contextSubjectList : [])
+  ]);
   result.domainHits = listWordHits(text, opt.domainList);
 
   if (score >= opt.threshold && hitWords.length > 0) {
@@ -3779,9 +3861,9 @@ async function startAnalysis() {
   }
 
   const localOptions = getCurrentLocalOptions();
-  const { requireEntity, threshold, entitySet, domainSet, negSet, strongEntities, weakEntities, domainList, proximity } = localOptions;
+  const { requireEntity, threshold, entitySet, contextSubjectSet, domainSet, negSet, strongEntities, weakEntities, domainList, proximity } = localOptions;
 
-  log(`词库规模 → 实体词: ${entitySet.size}（强 ${strongEntities.length} / 弱 ${weakEntities.length}） | 领域词: ${domainSet.size} | 负面词: ${negSet.size}`, 'info');
+  log(`词库规模 → 实体词: ${entitySet.size}（强 ${strongEntities.length} / 弱 ${weakEntities.length}） | 泛主体词: ${contextSubjectSet.size} | 领域词: ${domainSet.size} | 负面词: ${negSet.size}`, 'info');
   log(`阈值: ${threshold.toFixed(2)} | 实体词过滤: ${requireEntity ? '开启' : '关闭'} | 弱实体邻近共现距离: ${proximity > 0 ? proximity + '字' : '关闭'}`, 'info');
 
   const totalRows = rawData.length - 1;
@@ -3812,6 +3894,11 @@ async function startAnalysis() {
 
     let rowHit = false;
     const cellHits = [];
+    const rowContextText = targetCols
+      .filter(target => target.colIdx >= 0 && target.colIdx !== undefined)
+      .map(target => String(row[target.colIdx] || '').trim())
+      .filter(Boolean)
+      .join('\n');
 
     // 逐字段独立判断（兼容默认与自定义）
     for (const target of targetCols) {
@@ -3822,7 +3909,7 @@ async function startAnalysis() {
       const label = target.label;
       if (!text) continue;
 
-      const localHit = analyzeTextLocal(text, localOptions);
+      const localHit = analyzeTextLocal(text, localOptions, rowContextText);
       if (localHit.matched) {
         rowHit = true;
         cellHits.push({
@@ -3863,7 +3950,7 @@ async function startAnalysis() {
       const aiTotal = resultRows.length;
       log(`AI核验开始 → ${aiTotal} 条 | 并发 ${concurrency} | Key 数 ${keys.length}${keys.length > 1 ? '（轮询）' : ''}`, 'info');
 
-      const systemP = `你是一名专业的企业舆情分析员，专门识别与国家电网公司招聘和薪酬管理相关的负面信息。\n只输出 JSON，不要输出任何其他内容。`;
+      const systemP = `你是一名专业的企业舆情分析员，专门识别与国家电网公司招聘和薪酬管理相关的负面信息。\n必须先判断主体是否明确指向国家电网/国网/供电公司/供电局/供电所/95598/网上国网/国网下属单位。\n仅出现国企、央企、体制内、垄断行业等泛称，未明确指向国网主体时，必须判为非负面。\n如果同条记录的标题、正文、摘要、评论或跟帖任一字段已明确出现国网主体，其他字段中的泛称可以视为承接该国网主体。\n只输出 JSON，不要输出任何其他内容。`;
       let done = 0;
       let nextIdx = 0;        // 任务游标
       let keyCursor = 0;      // Key 轮询游标
@@ -3894,7 +3981,7 @@ async function startAnalysis() {
           const reply = await callLLM(model, key, prompt, systemP);
           const json = parseAIReply(reply);
 
-          if (json && (json.r === true || json.r === "true" || json.overall_negative === true)) {
+          if (isAIConfirmedNegative(json)) {
             rr.aiConfirmed = true;
             aiMarked++;
             $('statAI').textContent = aiMarked;
@@ -3996,6 +4083,10 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function buildAIPrompt(content) {
   return `你是国家电网人力资源舆情分析员。判断以下内容是否属于国网人资负面舆情。
 
+主体要求：必须明确指向国家电网/国网/供电公司/供电局/供电所/95598/网上国网/国网下属单位，才可判为负面。
+排除规则：仅出现“国企/央企/体制内/垄断行业”等泛称，或只是在讨论一般国企招聘、国企待遇、央企工资、体制内稳定，未明确指向国网主体时，一律判为非负面，subject填“泛国企”或“不明确”。
+承接规则：如果标题、正文、摘要、评论或跟帖任一字段已明确出现国网主体，则同条记录其他字段中的“国企/央企/体制内”等泛称可以视为承接该国网主体。
+
 【招聘类】质疑公平性(萝卜招聘/内定/歧视/流程不透明) | 质疑合规性(虚假招聘/违规违约/体检政审争议) | 信息不实(公告错误/岗位不符/承诺夸大) | 不良反馈(面试不公/投诉无门/拖延/毁约) | 政策误解(招录条件/专业限制/学历要求/岗位分配)
 
 【薪酬类】负责人高薪争议 | 薪酬公平(同工不同酬/差距过大/倒挂) | 不实数据(编造薪资/以偏概全) | 薪酬合规(违规津补贴/少缴社保) | 薪酬争议(降薪/绩效不公/福利缩水/密薪制) | 政策误读(三项制度改革/负责人薪酬) | 内部泄露(爆料薪资/文件外流)
@@ -4004,7 +4095,7 @@ function buildAIPrompt(content) {
 
 内容：${content || '（空）'}
 
-输出JSON：{"r":true/false,"c":"招聘/薪酬/无关","s":"场景","reason":"理由(15字内)"}`;
+输出JSON：{"r":true/false,"subject":"国网/泛国企/其他/不明确","c":"招聘/薪酬/无关","s":"场景","reason":"理由(15字内)"}`;
 }
 
 function parseAIReply(reply) {
@@ -4014,6 +4105,14 @@ function parseAIReply(reply) {
     if (!m) return null;
     return JSON.parse(m[0]);
   } catch { return null; }
+}
+
+function isAIConfirmedNegative(json) {
+  if (!json) return false;
+  const negative = json.r === true || json.r === 'true' || json.overall_negative === true;
+  const subject = String(json.subject || json.subj || json.entity || '').trim();
+  const isSgccSubject = subject === '国网' || subject === '国家电网' || subject.includes('国家电网') || subject.includes('国网');
+  return negative && isSgccSubject;
 }
 
 // ═══════════════════════════════════════════
@@ -4461,7 +4560,7 @@ function getQualityLocalPrediction(row, selectedCols, options) {
     const text = String(row[colIdx] || '').trim();
     if (!text) continue;
     rawText.push(text);
-    const hit = analyzeTextLocal(text, options);
+    const hit = analyzeTextLocal(text, options, text);
     if (hit.matched) {
       hitCells.push({
         colIdx,
@@ -4688,7 +4787,7 @@ async function runQualityAI() {
   let done = 0;
   let nextIdx = 0;
   let keyCursor = 0;
-  const systemP = `你是一名专业的企业舆情分析员，专门识别与国家电网公司招聘和薪酬管理相关的负面信息。\n只输出 JSON，不要输出任何其他内容。`;
+  const systemP = `你是一名专业的企业舆情分析员，专门识别与国家电网公司招聘和薪酬管理相关的负面信息。\n必须先判断主体是否明确指向国家电网/国网/供电公司/供电局/供电所/95598/网上国网/国网下属单位。\n仅出现国企、央企、体制内、垄断行业等泛称，未明确指向国网主体时，必须判为非负面。\n如果同条记录的标题、正文、摘要、评论或跟帖任一字段已明确出现国网主体，其他字段中的泛称可以视为承接该国网主体。\n只输出 JSON，不要输出任何其他内容。`;
 
   setQualityProgress(`AI评测准备中：本地命中 ${aiTargets.length} 条`, 10);
   log(`质量验证：AI评测开始 → 总样本 ${prepared.rows.length} | 送检 ${aiTargets.length} | 并发 ${concurrency}`, 'info');
@@ -4700,7 +4799,7 @@ async function runQualityAI() {
       if (content.length > 1500) content = content.substring(0, 1500) + '...(已截断)';
       const reply = await callLLM(model, keys[(keyCursor++) % keys.length], buildAIPrompt(content), systemP);
       const json = parseAIReply(reply);
-      const confirmed = !!(json && (json.r === true || json.r === 'true' || json.overall_negative === true));
+      const confirmed = isAIConfirmedNegative(json);
       row.predicted = confirmed;
       row.aiDecision = confirmed ? '确认' : '否决';
       row.aiReason = json?.reason || json?.s || '';
