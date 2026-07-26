@@ -1631,6 +1631,9 @@ input[type="range"]::-moz-range-progress {
           <div style="margin-top:12px; display:flex; gap:8px;">
             <button class="btn btn-secondary btn-sm" id="addModelBtn">＋ 添加模型</button>
           </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6;">
+            默认模型也可编辑；当服务商模型 ID 迭代或停用时，可直接更新模型 ID / API 地址。
+          </div>
 
           <!-- 选中模型的 Key 配置 -->
           <div class="divider"></div>
@@ -2140,7 +2143,7 @@ input[type="range"]::-moz-range-progress {
 <!-- 添加模型弹窗 -->
 <div class="modal-overlay" id="addModelModal">
   <div class="modal">
-    <div class="modal-title">添加自定义模型</div>
+    <div class="modal-title" id="modelModalTitle">添加自定义模型</div>
     <div class="form-row" style="margin-bottom:12px;">
       <div class="form-label">模型名称</div>
       <input type="text" id="newModelName" placeholder="如：GPT-4o">
@@ -2154,6 +2157,7 @@ input[type="range"]::-moz-range-progress {
       <input type="text" id="newModelId" placeholder="如：gpt-4o">
     </div>
     <div class="modal-actions">
+      <button class="btn btn-secondary" id="resetBuiltinModelBtn" style="display:none;margin-right:auto;">恢复默认配置</button>
       <button class="btn btn-ghost" id="cancelModelBtn">取消</button>
       <button class="btn btn-primary" id="confirmModelBtn">添加</button>
     </div>
@@ -2933,10 +2937,14 @@ let resultRows = [];
 let previewTargetCols = null; // 存储当前分析使用的列信息，供 renderPreview 使用
 
 // 模型配置
+const DEFAULT_BUILTIN_MODELS = {
+  deepseek: { id: 'deepseek', name: 'DeepSeek Chat', url: 'https://api.deepseek.com/v1', modelId: 'deepseek-chat', builtin: true }
+};
 let models = [
-  { id: 'deepseek', name: 'DeepSeek Chat', url: 'https://api.deepseek.com/v1', modelId: 'deepseek-chat', builtin: true }
+  { ...DEFAULT_BUILTIN_MODELS.deepseek }
 ];
 let activeModelId = 'deepseek';
+let editingModelId = null;
 
 // ═══════════════════════════════════════════
 //  工具函数
@@ -3295,6 +3303,7 @@ const LEXICON_VERSION = 'v5'; // 词库版本号，更新词库时递增
 function saveConfig() {
   const config = {
     models: models.filter(m => !m.builtin),
+    builtinModelOverrides: {},
     activeModelId: activeModelId,
     apiKeys: {},
     lexiconVersion: LEXICON_VERSION,
@@ -3307,6 +3316,14 @@ function saveConfig() {
       exempt: $('exemptTextarea').value
     }
   };
+
+  models.filter(m => m.builtin).forEach(m => {
+    config.builtinModelOverrides[m.id] = {
+      name: m.name,
+      url: m.url,
+      modelId: m.modelId
+    };
+  });
 
   // 保存当前模型的API Key
   models.forEach(m => {
@@ -3337,6 +3354,17 @@ function loadConfig() {
 
 function applyConfig(config) {
   if (!config) return;
+  // 恢复内置模型覆盖配置（例如默认 DeepSeek 模型 ID 或 API 地址迭代）
+  if (config.builtinModelOverrides) {
+    Object.entries(config.builtinModelOverrides).forEach(([id, override]) => {
+      const target = models.find(m => m.id === id && m.builtin);
+      if (target && override) {
+        if (override.name) target.name = override.name;
+        if (override.url) target.url = override.url;
+        if (override.modelId) target.modelId = override.modelId;
+      }
+    });
+  }
   // 恢复自定义模型
   if (config.models && Array.isArray(config.models)) {
     config.models.forEach(m => {
@@ -3388,10 +3416,22 @@ function renderModelList() {
         <div class="model-item-name">${escHtml(m.name)}</div>
         <div class="model-item-url">${escHtml(m.url)}</div>
       </div>
+      <button class="btn btn-secondary btn-sm" onclick="editModel('${m.id}')">编辑</button>
       ${m.builtin ? '' : `<button class="btn btn-ghost btn-sm" onclick="removeModel('${m.id}')">删除</button>`}
     `;
     list.appendChild(item);
   });
+}
+
+function openModelModal(model = null) {
+  editingModelId = model ? model.id : null;
+  $('modelModalTitle').textContent = model ? (model.builtin ? '编辑默认模型' : '编辑自定义模型') : '添加自定义模型';
+  $('newModelName').value = model?.name || '';
+  $('newModelUrl').value = model?.url || '';
+  $('newModelId').value = model?.modelId || '';
+  $('confirmModelBtn').textContent = model ? '保存' : '添加';
+  $('resetBuiltinModelBtn').style.display = model?.builtin ? '' : 'none';
+  $('addModelModal').classList.add('open');
 }
 
 window.selectModel = function(id) {
@@ -3413,23 +3453,48 @@ window.removeModel = function(id) {
   saveConfig();
 };
 
+window.editModel = function(id) {
+  const model = models.find(m => m.id === id);
+  if (!model) return;
+  openModelModal(model);
+};
+
 $('addModelBtn').addEventListener('click', () => {
-  $('newModelName').value = '';
-  $('newModelUrl').value = '';
-  $('newModelId').value = '';
-  $('addModelModal').classList.add('open');
+  openModelModal();
 });
 
-$('cancelModelBtn').addEventListener('click', () => $('addModelModal').classList.remove('open'));
+$('cancelModelBtn').addEventListener('click', () => {
+  editingModelId = null;
+  $('addModelModal').classList.remove('open');
+});
+
+$('resetBuiltinModelBtn').addEventListener('click', () => {
+  if (!editingModelId) return;
+  const defaults = DEFAULT_BUILTIN_MODELS[editingModelId];
+  if (!defaults) return;
+  $('newModelName').value = defaults.name;
+  $('newModelUrl').value = defaults.url;
+  $('newModelId').value = defaults.modelId;
+});
 
 $('confirmModelBtn').addEventListener('click', () => {
   const name = $('newModelName').value.trim();
   const url = $('newModelUrl').value.trim();
   const modelId = $('newModelId').value.trim();
   if (!name || !url || !modelId) { alert('请填写完整'); return; }
-  const id = 'custom_' + Date.now();
-  models.push({ id, name, url, modelId, builtin: false });
-  activeModelId = id;
+  if (editingModelId) {
+    const model = models.find(m => m.id === editingModelId);
+    if (!model) return;
+    model.name = name;
+    model.url = url;
+    model.modelId = modelId;
+    activeModelId = model.id;
+  } else {
+    const id = 'custom_' + Date.now();
+    models.push({ id, name, url, modelId, builtin: false });
+    activeModelId = id;
+  }
+  editingModelId = null;
   $('addModelModal').classList.remove('open');
   renderModelList();
   saveConfig();
